@@ -5,8 +5,14 @@ Now it can:
 - 
 - Copy Message of a Channel in a file
 - Show with a command how many were copied(/count)
-- a normal ping(/ping) command
+- a normal ping command(/ping)
 - a /stop command which will stop the bot, only the owner(discord-id) of the bot can dot that
+
+Dependencies:
+-
+- Python 3.11.1
+- discord.py
+- datetime(module)
 
 Usage:
 -
@@ -26,4 +32,7 @@ token = open("THE_PATH_OF_token.env_FILE", "r").read()
 ```python
 file = open("THE_PATH_OF_citations.txt_FILE", "a")
 ```
-- You can start the bot by running bot.py
+- You can start the bot by running bot.py:
+```shell
+python3 bot.py
+```
