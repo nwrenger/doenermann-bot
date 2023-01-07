@@ -31,7 +31,7 @@ async def on_ready():
 
 
 @bot.tree.command()
-async def döner(interaction: discord.Interaction):
+async def ping(interaction: discord.Interaction):
     """Ping?"""
     await interaction.response.send_message('Pong')
 
