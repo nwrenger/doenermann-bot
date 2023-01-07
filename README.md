@@ -4,8 +4,8 @@ A Reposetory with the Dönermann Bot used in a private Discord server of mine. I
 Now it can:
 - 
 - Copy Message of a Channel in a file
-- Show with a command how many were copied
-- a normal ping(/döner) command
+- Show with a command how many were copied(/count)
+- a normal ping(/ping) command
 - a /stop command which will stop the bot, only the owner(discord-id) of the bot can dot that
 
 Usage:
