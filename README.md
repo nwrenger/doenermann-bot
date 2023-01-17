@@ -6,7 +6,7 @@ Now it can:
 - Copy Message of a Channel in a file
 - Show with a command how many were copied(/count)
 - a normal ping command(/ping)
-- a /stop command which will stop the bot, only the owner(discord-id) of the bot can dot that
+- a /stop command which will stop the bot, only the owner(discord-id) of the bot can do that
 
 Dependencies:
 -
