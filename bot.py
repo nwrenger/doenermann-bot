@@ -99,9 +99,9 @@ async def next_birthdays(interaction: discord.Interaction):
     e = discord.Embed(title="Next Birthdays:", description="", color=0x0800ff)
     for user, birth, next in births_tmp[:10]:
         age = now.year - birth.year
-        if [now.month, now.day] < [birth.month, birth.day]:
-            age -= 1
-        e.add_field(name=next.strftime("%B %d %Y"),
+        if [now.month, now.day] > [next.month, next.day]:
+            age += 1
+        e.add_field(name=next.strftime("%d %B %Y"),
                     value=f"<@{user}> ({age})", inline=False)
     await interaction.response.send_message(embed=e)
 
