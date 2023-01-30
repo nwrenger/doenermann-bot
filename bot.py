@@ -115,9 +115,9 @@ async def set_birthday(interaction: discord.Interaction, birth: str):
     user = interaction.user.id
     try:
         birthdays[user] = datetime.strptime(birth, DATE_FMT).date()
-    except Exception:
+    except Exception as ex:
         e = discord.Embed(title="Invalid date!",
-                          description="", color=0xff0000)
+                          description=str(ex), color=0xff0000)
         await interaction.response.send_message(embed=e)
         return
 
