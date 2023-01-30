@@ -148,7 +148,7 @@ async def on_message(message):
         citations.flush()
 
 
-@tasks.loop(hours=24)
+@tasks.loop(minutes= 1)
 async def on_day():
     now = datetime.now().date()
     for user, birth in birthdays.items():
