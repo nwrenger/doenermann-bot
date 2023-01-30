@@ -154,7 +154,11 @@ async def on_day():
     for user, birth in birthdays.items():
         if calc_birthday(birth) == now:
             await user.add_roles(user.guild.get_role(birthday_role))
-
+        else:
+            try:
+                await birthday_role.delete()
+            except:
+                return
 
 @bot.event
 async def on_member_join(user):
