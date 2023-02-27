@@ -148,17 +148,18 @@ async def on_message(message):
         citations.flush()
 
 
-@tasks.loop(minutes= 1)
-async def on_day():
-    now = datetime.now().date()
-    for user, birth in birthdays.items():
-        if calc_birthday(birth) == now:
-            await user.add_roles(user.guild.get_role(birthday_role))
-        else:
-            try:
-                await birthday_role.delete()
-            except:
-                return
+#doesnt work, i will fix it later
+# async def on_day():
+#     now = datetime.now().date()
+#     for user, birth in birthdays.items():
+#         if calc_birthday(birth) == now:
+#             await user.add_roles(user.guild.get_role(birthday_role))
+#         else:
+#             try:
+#                 await birthday_role.delete()
+#             except:
+#                 return
+
 
 @bot.event
 async def on_member_join(user):
