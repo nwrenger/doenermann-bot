@@ -9,7 +9,7 @@ Now it can:
 - a /stop command which will stop the bot, only the owner(discord-id) of the bot can dot that
 - Add your birthday with /set_birthday
 - show the next upcomming birthdays(/next_birthdays)
-- Give a user a Birthday Role when the user has Birthday
+- Give a user a Birthday Role when the user has Birthday(Currently doesn't work because of API changes)
 - Give a user a Member Role when the user joins the server
 
 Dependencies:
