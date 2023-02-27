@@ -17,6 +17,7 @@ intents.message_content = True
 intents.members = True
 token = token_file.read_text()
 counts = 0
+listofcounts = []
 server = discord.Object(id=YOUR_SERVER_ID)
 owner = YOUR_ID
 copied_channel = CHANNEL_ID
@@ -81,7 +82,9 @@ async def stop(interaction: discord.Interaction):
 async def count(interaction: discord.Interaction):
     """Gives the Count of the already Recorded Messages after last Start"""
     e = discord.Embed(title="Already recorded messages: " +
-                      str(counts), description="", color=0x00ff15)
+                      str(counts) + "\nList of already recorded messages:", description="", color=0x00ff15)
+    for line in listofcounts:
+       e.add_field(name = "", value = line, inline = False)
     await interaction.response.send_message(embed=e)
 
 
@@ -139,11 +142,13 @@ async def on_message(message):
     # print(message)
     if message.channel.id == copied_channel:
         global counts
+        global listofcounts
         counts = counts + 1
         line = str(message.content)
         # print(counts)
         user = str(message.author) + ": "
         print(user + line)
+        listofcounts.append(user + line)
         citations.write(user + line + "\n")
         citations.flush()
 
@@ -172,6 +177,7 @@ def calc_birthday(birth: date) -> date:
     if next < now:
         next = next.replace(next.year + 1)
     return next
+
 
 
 bot.run(token)
