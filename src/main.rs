@@ -1,7 +1,7 @@
 mod commands;
 
-use std::env;
 use dotenv::dotenv;
+use std::env;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
@@ -52,7 +52,7 @@ impl EventHandler for Handler {
         // .await;
 
         // println!("I now have the following guild slash commands: {:#?}", commands);
-    // }
+        // }
     }
 }
 
