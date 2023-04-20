@@ -37,5 +37,7 @@ member_role = MEMBER_ROLE_ID
 ```shell
 python3 bot.py
 ```
+
 What's next:
+-
 I am planning to code that bot in Rust. You can find it's progress in the <a href="https://github.com/NWrenger/doenermann-bot/tree/Rust">Rust Branch</a>.
