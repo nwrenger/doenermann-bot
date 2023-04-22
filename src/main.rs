@@ -4,6 +4,7 @@ use dotenv::dotenv;
 use std::env;
 
 use serenity::async_trait;
+use serenity::builder::CreateEmbed;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
@@ -18,15 +19,21 @@ impl EventHandler for Handler {
             // println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
-                "ping" => commands::ping::run(&command.data.options),
-                _ => "not implemented :(".to_string(),
+                "döner" => commands::ping::run(&command.data.options),
+                _ => {
+                    let mut embed = CreateEmbed::default();
+                    embed.title("Command not Found!");
+                    ("".to_string(), embed)
+                }
             };
 
             if let Err(why) = command
                 .create_interaction_response(&ctx.http, |response| {
                     response
                         .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| message.content(content))
+                        .interaction_response_data(|message| {
+                            message.content(content.0).add_embed(content.1)
+                        })
                 })
                 .await
             {
@@ -45,11 +52,10 @@ impl EventHandler for Handler {
                 .expect("GUILD_ID must be an integer"),
         );
 
-        // let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-        //     commands
-        //         .create_application_command(|command| commands::ping::register(command))
-        // })
-        // .await;
+        let _commands = GuildId::set_application_commands(&_guild_id, &_ctx.http, |commands| {
+            commands.create_application_command(|command| commands::ping::_register(command))
+        })
+        .await;
 
         // println!("I now have the following guild slash commands: {:#?}", commands);
         // }
