@@ -9,11 +9,22 @@ use serenity::model::application::interaction::{Interaction, InteractionResponse
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
 use serenity::prelude::*;
+use serenity::model::prelude::*;
 
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn message(&self, _ctx: Context, msg: Message) {
+        let copied_channel: u64 = env::var("C_CHANNEL_ID ")
+            .expect("Expected C_CHANNEL_ID in environment")
+            .parse()
+            .expect("C_CHANNEL_ID must be an Integer!");
+        println!("{copied_channel}");
+        if msg.channel_id.as_u64() == &copied_channel {
+            println!("{}", msg.content);
+        }
+    }
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             // println!("Received command interaction: {:#?}", command);
