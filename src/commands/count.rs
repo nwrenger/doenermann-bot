@@ -5,8 +5,8 @@ pub fn run(_options: &[CommandDataOption], count: i32, count_list: &mut [String]
     let title = "Already recorded messages: ".to_string() + &count.to_string() + "\nList of already recorded messages:";
     let mut embed: CreateEmbed = CreateEmbed::default();
     embed.title(title);
-    for i in 0..count_list.len() {
-        embed.field("", count_list[i].clone(), false);
+    for i in count_list {
+        embed.field("", i, false);
     }
     ("".to_string(), embed)
 }
