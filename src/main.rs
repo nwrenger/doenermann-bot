@@ -26,10 +26,7 @@ impl EventHandler for Handler {
             .expect("Expected ROLE_ID in environment")
             .parse()
             .expect("ROLE_ID must be an Integer!");
-        new_member
-            .add_role(&ctx.http, role_id)
-            .await
-            .unwrap()
+        new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
     async fn message(&self, _ctx: Context, msg: Message) {
         let copied_channel: u64 = env::var("C_CHANNEL_ID")
