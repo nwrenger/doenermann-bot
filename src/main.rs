@@ -1,70 +1,104 @@
 mod commands;
 
+use chrono::offset::Local;
 use dotenv::dotenv;
 use std::env;
+use std::fs::OpenOptions;
+use std::io::Write;
 
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::GuildId;
-use serenity::prelude::*;
 use serenity::model::prelude::*;
+use serenity::prelude::*;
 
 struct Handler;
+
+static mut COUNT: i32 = 0;
+static mut COUNT_LIST: Vec<String> = vec![];
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, _ctx: Context, msg: Message) {
-        let copied_channel: u64 = env::var("C_CHANNEL_ID ")
+        let copied_channel: u64 = env::var("C_CHANNEL_ID")
             .expect("Expected C_CHANNEL_ID in environment")
             .parse()
             .expect("C_CHANNEL_ID must be an Integer!");
-        println!("{copied_channel}");
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open("citations.txt")
+            .expect("Couldn't open citations.txt");
+
+        
         if msg.channel_id.as_u64() == &copied_channel {
-            println!("{}", msg.content);
+            let user_message = msg.author.name + ": " + &msg.content + "\n";
+            file.write_all(user_message.as_bytes())
+                .expect("Couldn't write to file");
+            print!("{}", user_message);
+            unsafe {
+                COUNT += 1;
+                COUNT_LIST.push(user_message);
+            }
         }
     }
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             // println!("Received command interaction: {:#?}", command);
-
-            let content = match command.data.name.as_str() {
-                "döner" => commands::ping::run(&command.data.options),
-                _ => {
-                    let mut embed = CreateEmbed::default();
-                    embed.title("Command not Found!");
-                    ("".to_string(), embed)
-                }
-            };
-
-            if let Err(why) = command
-                .create_interaction_response(&ctx.http, |response| {
-                    response
+            unsafe {
+                let content = match command.data.name.as_str() {
+                    "döner" => commands::doener::run(&command.data.options),
+                    "count" => commands::count::run(&command.data.options, COUNT, &mut COUNT_LIST),
+                    _ => {
+                        let mut embed = CreateEmbed::default();
+                        embed.title("Command not Found!");
+                        ("".to_string(), embed)
+                    }
+                };
+            
+                if let Err(why) = command
+                    .create_interaction_response(&ctx.http, |response| {
+                        response
                         .kind(InteractionResponseType::ChannelMessageWithSource)
                         .interaction_response_data(|message| {
                             message.content(content.0).add_embed(content.1)
-                        })
-                })
-                .await
-            {
-                println!("Cannot respond to slash command: {}", why);
+                            })
+                    })
+                    .await
+                {
+                    println!("Cannot respond to slash command: {}", why);
+                }
             }
         }
     }
 
     async fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
+        
+        let copy_message = "Begin Copying on ".to_string() + &Local::now().time().to_string() + ":\n";
 
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open("citations.txt")
+            .expect("Couldn't open citations.txt");
+        
+        file.write_all(copy_message.as_bytes())
+            .expect("Couldn't write to file");
+        
         let _guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
-
+        
         let _commands = GuildId::set_application_commands(&_guild_id, &_ctx.http, |commands| {
-            commands.create_application_command(|command| commands::ping::_register(command))
+            commands.create_application_command(|command| commands::doener::_register(command));
+            commands.create_application_command(|command| commands::count::_register(command))
         })
         .await;
 
@@ -79,8 +113,12 @@ async fn main() {
     dotenv().ok();
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
+    let intents = GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::DIRECT_MESSAGES
+        | GatewayIntents::MESSAGE_CONTENT;
+
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::empty())
+    let mut client = Client::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");
