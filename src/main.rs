@@ -21,6 +21,16 @@ static mut COUNT_LIST: Vec<String> = vec![];
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn guild_member_addition(&self, ctx: Context, mut new_member: Member) {
+        let role_id: u64 = env::var("ROLE_ID")
+            .expect("Expected ROLE_ID in environment")
+            .parse()
+            .expect("ROLE_ID must be an Integer!");
+        new_member
+            .add_role(&ctx.http, role_id)
+            .await
+            .unwrap()
+    }
     async fn message(&self, _ctx: Context, msg: Message) {
         let copied_channel: u64 = env::var("C_CHANNEL_ID")
             .expect("Expected C_CHANNEL_ID in environment")
@@ -33,7 +43,6 @@ impl EventHandler for Handler {
             .open("citations.txt")
             .expect("Couldn't open citations.txt");
 
-        
         if msg.channel_id.as_u64() == &copied_channel {
             let user_message = msg.author.name + ": " + &msg.content + "\n";
             file.write_all(user_message.as_bytes())
@@ -58,13 +67,13 @@ impl EventHandler for Handler {
                         ("".to_string(), embed)
                     }
                 };
-            
+
                 if let Err(why) = command
                     .create_interaction_response(&ctx.http, |response| {
                         response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| {
-                            message.content(content.0).add_embed(content.1)
+                            .kind(InteractionResponseType::ChannelMessageWithSource)
+                            .interaction_response_data(|message| {
+                                message.content(content.0).add_embed(content.1)
                             })
                     })
                     .await
@@ -77,25 +86,26 @@ impl EventHandler for Handler {
 
     async fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
-        
-        let copy_message = "Begin Copying on ".to_string() + &Local::now().time().to_string() + ":\n";
+
+        let copy_message =
+            "Begin Copying on ".to_string() + &Local::now().time().to_string() + ":\n";
 
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
             .open("citations.txt")
             .expect("Couldn't open citations.txt");
-        
+
         file.write_all(copy_message.as_bytes())
             .expect("Couldn't write to file");
-        
+
         let _guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
-        
+
         let _commands = GuildId::set_application_commands(&_guild_id, &_ctx.http, |commands| {
             commands.create_application_command(|command| commands::doener::_register(command));
             commands.create_application_command(|command| commands::count::_register(command))
@@ -113,9 +123,7 @@ async fn main() {
     dotenv().ok();
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
-    let intents = GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
+    let intents = GatewayIntents::all();
 
     // Build our client.
     let mut client = Client::builder(token, intents)
