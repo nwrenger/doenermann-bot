@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use csv::{Writer, Reader};
+use csv::{Reader, Writer};
 use serde;
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::model::prelude::command::CommandOptionType;
@@ -20,10 +20,8 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
             Some(CommandDataOptionValue::String(value)) => {
                 if NaiveDate::parse_from_str(value, "%d.%m.%Y").is_ok() {
                     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
-                    let mut rows: Vec<Row> = rdr
-                        .deserialize()
-                        .map(|result| result.unwrap())
-                        .collect();
+                    let mut rows: Vec<Row> =
+                        rdr.deserialize().map(|result| result.unwrap()).collect();
 
                     // Update the user's birthday or add a new row if it doesn't exist
                     let date = NaiveDate::parse_from_str(value, "%d.%m.%Y").unwrap();
