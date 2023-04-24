@@ -67,7 +67,7 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
 
 pub fn _register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
-        .name("set_birhday")
+        .name("set_birthday")
         .description("Set your Birhtday")
         .create_option(|f| {
             f.name("birth")
