@@ -61,9 +61,10 @@ impl EventHandler for Handler {
                 let content = match command.data.name.as_str() {
                     "döner" => commands::doener::run(&command.data.options),
                     "count" => commands::count::run(&command.data.options, COUNT, &mut COUNT_LIST),
-                    "set_birhday" => {
+                    "set_birthday" => {
                         commands::set_birthday::run(&command.data.options, command.user.id.into())
                     }
+                    "next_birthdays" => commands::next_birthdays::run(&command.data.options),
                     _ => {
                         let mut embed = CreateEmbed::default();
                         embed.title("Command not Found!");
@@ -114,7 +115,9 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::doener::_register(command));
             commands.create_application_command(|command| commands::count::_register(command));
             commands
-                .create_application_command(|command| commands::set_birthday::_register(command))
+                .create_application_command(|command| commands::set_birthday::_register(command));
+            commands
+                .create_application_command(|command| commands::next_birthdays::_register(command))
         })
         .await
         .unwrap();
