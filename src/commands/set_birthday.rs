@@ -15,16 +15,17 @@ struct Row {
 
 pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
     let mut embed = CreateEmbed::default();
+    let date_fmt = "%d.%m.%Y";
     match options.get(0) {
         Some(option) => match &option.resolved {
             Some(CommandDataOptionValue::String(value)) => {
-                if NaiveDate::parse_from_str(value, "%d.%m.%Y").is_ok() {
+                if NaiveDate::parse_from_str(value, date_fmt).is_ok() {
                     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
                     let mut rows: Vec<Row> =
                         rdr.deserialize().map(|result| result.unwrap()).collect();
 
                     // Update the user's birthday or add a new row if it doesn't exist
-                    let date = NaiveDate::parse_from_str(value, "%d.%m.%Y").unwrap();
+                    let date = NaiveDate::parse_from_str(value, date_fmt).unwrap();
                     let mut found = false;
                     for row in rows.iter_mut() {
                         if row.user == user {
@@ -51,7 +52,7 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
                 } else {
                     embed.title("Invalid Date!");
                     embed.description(
-                        &NaiveDate::parse_from_str(value, "%d.%m.%Y")
+                        &NaiveDate::parse_from_str(value, date_fmt)
                             .err()
                             .unwrap()
                             .to_string(),
