@@ -9,7 +9,7 @@ pub fn run(
     let title = "Already recorded messages: ".to_string()
         + &count.to_string()
         + "\nList of already recorded messages:";
-    let mut embed: CreateEmbed = CreateEmbed::default();
+    let mut embed = CreateEmbed::default();
     embed.title(title);
     for i in count_list {
         embed.field("", i, false);
