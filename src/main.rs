@@ -30,7 +30,7 @@ impl EventHandler for Handler {
         new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
     //Copies text messages of a certain channel(specified in the env, C_CHANNEL_ID) in a file named "citatins.txt".
-    //It also adds and increments the values (COUNT,COUNT_LIST) used in the cound command.
+    //It also adds and increments the values (COUNT,COUNT_LIST) used in the count command.
     async fn message(&self, _ctx: Context, msg: Message) {
         let copied_channel: u64 = env::var("C_CHANNEL_ID")
             .expect("Expected C_CHANNEL_ID in environment")
@@ -87,7 +87,7 @@ impl EventHandler for Handler {
         }
     }
 
-    //setting stuff on start
+    //setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
@@ -136,9 +136,6 @@ async fn main() {
         .expect("Error creating client");
 
     // Finally, start a single shard, and start listening to events.
-    //
-    // Shards will automatically attempt to reconnect, and will perform
-    // exponential backoff until it reconnects.
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
