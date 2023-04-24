@@ -18,19 +18,19 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
     match options.get(0) {
         Some(option) => match &option.resolved {
             Some(CommandDataOptionValue::String(value)) => {
-                if NaiveDate::parse_from_str(&value, "%d.%m.%Y").is_ok() {
+                if NaiveDate::parse_from_str(value, "%d.%m.%Y").is_ok() {
                     let mut wtr = Writer::from_path("birthdays.csv").unwrap();
-                    let date = NaiveDate::parse_from_str(&value, "%d.%m.%Y").unwrap();
+                    let date = NaiveDate::parse_from_str(value, "%d.%m.%Y").unwrap();
                     wtr.serialize(Row {
                         birthday: date.to_string(),
                         user,
                     })
                     .unwrap();
-                    embed.title("Your Birthday was set to: ".to_string() + &value)
+                    embed.title("Your Birthday was set to: ".to_string() + value)
                 } else {
                     embed.title("Invalid Date!");
                     embed.description(
-                        &NaiveDate::parse_from_str(&value, "%d.%m.%Y")
+                        &NaiveDate::parse_from_str(value, "%d.%m.%Y")
                             .err()
                             .unwrap()
                             .to_string(),
