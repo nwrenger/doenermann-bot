@@ -61,6 +61,9 @@ impl EventHandler for Handler {
                 let content = match command.data.name.as_str() {
                     "döner" => commands::doener::run(&command.data.options),
                     "count" => commands::count::run(&command.data.options, COUNT, &mut COUNT_LIST),
+                    "set_birhday" => {
+                        commands::set_birthday::run(&command.data.options, command.user.id.into())
+                    }
                     _ => {
                         let mut embed = CreateEmbed::default();
                         embed.title("Command not Found!");
@@ -85,7 +88,7 @@ impl EventHandler for Handler {
     }
 
     //setting stuff on start
-    async fn ready(&self, _ctx: Context, ready: Ready) {
+    async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
         let copy_message =
@@ -100,18 +103,21 @@ impl EventHandler for Handler {
         file.write_all(copy_message.as_bytes())
             .expect("Couldn't write to file");
 
-        let _guild_id = GuildId(
+        let guild_id = GuildId(
             env::var("GUILD_ID")
                 .expect("Expected GUILD_ID in environment")
                 .parse()
                 .expect("GUILD_ID must be an integer"),
         );
 
-        let _commands = GuildId::set_application_commands(&_guild_id, &_ctx.http, |commands| {
+        GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands.create_application_command(|command| commands::doener::_register(command));
-            commands.create_application_command(|command| commands::count::_register(command))
+            commands.create_application_command(|command| commands::count::_register(command));
+            commands
+                .create_application_command(|command| commands::set_birthday::_register(command))
         })
-        .await;
+        .await
+        .unwrap();
     }
 }
 
