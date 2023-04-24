@@ -7,9 +7,11 @@ pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
     for i in 0..10 {
         embed.field((i + 1).to_string(), "Test Text", false);
     }
-    ("".to_string(),embed,)
+    ("".to_string(), embed)
 }
 
 pub fn _register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("next_birthdays").description("The next 10 Upcomming Birthdays")
+    command
+        .name("next_birthdays")
+        .description("The next 10 Upcomming Birthdays")
 }
