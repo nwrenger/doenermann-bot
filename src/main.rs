@@ -21,6 +21,7 @@ static mut COUNT_LIST: Vec<String> = vec![];
 
 #[async_trait]
 impl EventHandler for Handler {
+    //add a role specified in the env on server join
     async fn guild_member_addition(&self, ctx: Context, mut new_member: Member) {
         let role_id: u64 = env::var("ROLE_ID")
             .expect("Expected ROLE_ID in environment")
@@ -28,6 +29,8 @@ impl EventHandler for Handler {
             .expect("ROLE_ID must be an Integer!");
         new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
+    //Copies text messages of a certain channel(specified in the env, C_CHANNEL_ID) in a file named "citatins.txt".
+    //It also adds and increments the values (COUNT,COUNT_LIST) used in the cound command.
     async fn message(&self, _ctx: Context, msg: Message) {
         let copied_channel: u64 = env::var("C_CHANNEL_ID")
             .expect("Expected C_CHANNEL_ID in environment")
@@ -51,9 +54,9 @@ impl EventHandler for Handler {
             }
         }
     }
+    //commands handler
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            // println!("Received command interaction: {:#?}", command);
             unsafe {
                 let content = match command.data.name.as_str() {
                     "döner" => commands::doener::run(&command.data.options),
@@ -81,6 +84,7 @@ impl EventHandler for Handler {
         }
     }
 
+    //setting stuff on start
     async fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
@@ -108,9 +112,6 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::count::_register(command))
         })
         .await;
-
-        // println!("I now have the following guild slash commands: {:#?}", commands);
-        // }
     }
 }
 
