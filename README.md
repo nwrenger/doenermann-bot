@@ -40,4 +40,4 @@ python3 bot.py
 
 What's next:
 -
-I am planning to code that bot in Rust. You can find it's progress in the <a href="https://github.com/NWrenger/doenermann-bot/tree/Rust">Rust Branch</a>.
+I rewrote that bot in Rust. You can find it in the <a href="https://github.com/NWrenger/doenermann-bot/tree/Rust">Rust Branch</a>. The Rust implementation will get future feature updates, the Python implementation won't!
