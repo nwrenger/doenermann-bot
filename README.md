@@ -1,5 +1,5 @@
 # Dönermann-Bot
-A Reposetory with the Dönermann Bot used in a private Discord server of mine. It's using the discord.py libary. It can be forked and further used without any restrictions. 
+A Repository with the Dönermann Bot used in a private Discord server of mine. It's using the discord.py libary. It can be forked and further used without any restrictions. 
 
 Now it can:
 - 
