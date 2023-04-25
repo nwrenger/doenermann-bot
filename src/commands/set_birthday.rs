@@ -59,7 +59,7 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
                                 .to_string(),
                         )
                     } else {
-                        embed.description(format!("Stop it Erik! You can set Dates over the current Year! ({})", Local::now().date_naive().year()))
+                        embed.description(format!("Stop it Erik! You can't set Dates over the current Year! ({})", Local::now().date_naive().year()))
                     }
                 }
             }
