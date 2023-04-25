@@ -44,7 +44,7 @@ impl EventHandler for Handler {
             .expect("Couldn't open citations.txt");
 
         if msg.channel_id.as_u64() == &copied_channel {
-            let user_message = msg.author.name + ": " + &msg.content + "\n";
+            let user_message = format!("{}: {}\n", msg.author.name, msg.content);
             file.write_all(user_message.as_bytes())
                 .expect("Couldn't write to file");
             print!("{}", user_message);
@@ -92,8 +92,7 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
-        let copy_message =
-            "Begin Copying on ".to_string() + &Local::now().time().to_string() + ":\n";
+        let copy_message = format!("Begin Copying on {}:\n", Local::now().time());
 
         let mut file = OpenOptions::new()
             .write(true)

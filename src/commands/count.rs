@@ -6,11 +6,8 @@ pub fn run(
     count: i32,
     count_list: &mut [String],
 ) -> (String, CreateEmbed) {
-    let title = "Already recorded messages: ".to_string()
-        + &count.to_string()
-        + "\nList of already recorded messages:";
     let mut embed = CreateEmbed::default();
-    embed.title(title);
+    embed.title(format!("Already recorded messages: {}\nList of already recorded messages:", count));
     for i in count_list {
         embed.field("", i, false);
     }
