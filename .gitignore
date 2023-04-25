@@ -1,4 +1,6 @@
 /target
 /.vscode
 .env
+birthdays.csv
+citations.txt
 Cargo.lock
