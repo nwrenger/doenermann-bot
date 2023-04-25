@@ -26,7 +26,7 @@ GUILD_ID=The Server Id
 C_CHANNEL_ID=The copy Channel Id
 ROLE_ID=The Role Id you give players when they join the server
 ```
-- You can start the bot by running the binary file provided in the release(make sure to give it the right permissions):
+- You can start the bot by running the binary file provided in the release(make sure to give it the right permissions and that the files: .env, birthdays.csv and citations.txt are in the same directory as the bin file):
 ```shell
 ./doenermann-bot
 ```
