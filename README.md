@@ -17,12 +17,12 @@ Dependencies:
 
 Usage:
 -
-- First you have to add an Application in the Discord Developer Portal(https://discord.com/developers/applications) and create a bot 
+- First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot 
 - After that you paste your bot token in .env and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
 - Now you have to add your server id, the channel id(where you like the files to be copied from) and the id of the Member role(you have to create those) to the .env file:
 ```enviroment
 DISCORD_TOKEN=Your Token
-GUILD_ID=The Server Id
+GUILD_ID=The Server IdencH:
 C_CHANNEL_ID=The copy Channel Id
 ROLE_ID=The Role Id you give players when they join the server
 ```
