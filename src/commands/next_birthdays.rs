@@ -34,9 +34,14 @@ pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
         } else {
             date.with_year(now.year()).unwrap()
         };
+        let age = if date.with_year(now.year()) == now.with_year(now.year()) {
+            Local::now().date_naive().years_since(date).unwrap()
+        } else {
+            Local::now().date_naive().years_since(date).unwrap() + 1
+        };
         embed.field(
             future.format("%d %B %Y").to_string(),
-            format!("<@{}> ({})", i.user, (Local::now().date_naive().years_since(date).unwrap() + 1)),
+            format!("<@{}> ({})", i.user, age),
             false,
         );
     }
