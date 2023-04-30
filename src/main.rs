@@ -97,6 +97,7 @@ impl EventHandler for Handler {
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
+            .create_new(true)
             .open("citations.txt")
             .expect("Couldn't open citations.txt");
 
