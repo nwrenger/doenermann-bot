@@ -19,6 +19,8 @@ struct Handler;
 static mut COUNT: i32 = 0;
 static mut COUNT_LIST: Vec<String> = vec![];
 
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[async_trait]
 impl EventHandler for Handler {
     //add a role specified in the env on server join
@@ -125,6 +127,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
+    println!("Starting bot on Version {}...", PKG_VERSION);
     // Configure the client with your Discord bot token in the .env file.
     dotenv().ok();
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
