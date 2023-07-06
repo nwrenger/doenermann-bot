@@ -7,7 +7,10 @@ pub fn run(
     count_list: &mut [String],
 ) -> (String, CreateEmbed) {
     let mut embed = CreateEmbed::default();
-    embed.title(format!("Already recorded messages: {}\nList of already recorded messages:", count));
+    embed.title(format!(
+        "Already recorded messages: {}\nList of already recorded messages:",
+        count
+    ));
     for i in count_list {
         embed.field("", i, false);
     }

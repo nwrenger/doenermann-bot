@@ -1,5 +1,5 @@
+use chrono::{Datelike, Local, NaiveDate};
 use csv::Reader;
-use chrono::{NaiveDate, Local, Datelike};
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::model::prelude::interaction::application_command::CommandDataOption;
 
@@ -13,10 +13,9 @@ pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
     let mut embed = CreateEmbed::default();
     embed.title("Next Birthdays:");
     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
-    let mut rows: Vec<Row> =
-        rdr.deserialize().map(|result| result.unwrap()).collect();
+    let mut rows: Vec<Row> = rdr.deserialize().map(|result| result.unwrap()).collect();
     let now = Local::now().date_naive();
-    
+
     rows.sort_by_key(|row| {
         let birthday = NaiveDate::parse_from_str(&row.birthday, "%Y-%m-%d").unwrap();
         let next_birthday = if birthday.with_year(now.year()) < now.with_year(now.year()) {

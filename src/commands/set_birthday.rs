@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Local, Datelike};
+use chrono::{Datelike, Local, NaiveDate};
 use csv::{Reader, Writer};
 use serde;
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
@@ -19,7 +19,12 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
     match options.get(0) {
         Some(option) => match &option.resolved {
             Some(CommandDataOptionValue::String(value)) => {
-                if NaiveDate::parse_from_str(value, date_fmt).is_ok() && Local::now().date_naive().years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap()).is_some() {
+                if NaiveDate::parse_from_str(value, date_fmt).is_ok()
+                    && Local::now()
+                        .date_naive()
+                        .years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap())
+                        .is_some()
+                {
                     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
                     let mut rows: Vec<Row> =
                         rdr.deserialize().map(|result| result.unwrap()).collect();
@@ -51,7 +56,11 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
                     embed.title("Your Birthday was set to: ".to_string() + value)
                 } else {
                     embed.title("Invalid Date!");
-                    if Local::now().date_naive().years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap()).is_some() {
+                    if Local::now()
+                        .date_naive()
+                        .years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap())
+                        .is_some()
+                    {
                         embed.description(
                             &NaiveDate::parse_from_str(value, date_fmt)
                                 .err()
@@ -59,7 +68,10 @@ pub fn run(options: &[CommandDataOption], user: u64) -> (String, CreateEmbed) {
                                 .to_string(),
                         )
                     } else {
-                        embed.description(format!("Stop it Erik! You can't set Dates over the current Year! ({})", Local::now().date_naive().year()))
+                        embed.description(format!(
+                            "Stop it Erik! You can't set Dates over the current Year! ({})",
+                            Local::now().date_naive().year()
+                        ))
                     }
                 }
             }
