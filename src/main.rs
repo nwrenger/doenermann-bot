@@ -46,10 +46,9 @@ impl EventHandler for Handler {
             .expect("Couldn't open citations.txt");
 
         if msg.channel_id.as_u64() == &copied_channel {
-            let user_message = format!("{}: {}\n", msg.author.name, msg.content);
+            let user_message = format!("{}: {}\n", msg.author.name, msg.content.replace('\n', " - "));
             file.write_all(user_message.as_bytes())
                 .expect("Couldn't write to file");
-            print!("{}", user_message);
             unsafe {
                 COUNT += 1;
                 COUNT_LIST.push(user_message);
