@@ -14,10 +14,17 @@ use serenity::model::id::GuildId;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+struct Count;
+struct CountList;
 struct Handler;
 
-static mut COUNT: i32 = 0;
-static mut COUNT_LIST: Vec<String> = vec![];
+impl TypeMapKey for Count {
+    type Value = i32;
+}
+
+impl TypeMapKey for CountList {
+    type Value = Vec<String>;
+}
 
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -33,7 +40,7 @@ impl EventHandler for Handler {
     }
     //Copies text messages of a certain channel(specified in the env, C_CHANNEL_ID) in a file named "citatins.txt".
     //It also adds and increments the values (COUNT,COUNT_LIST) used in the count command.
-    async fn message(&self, _ctx: Context, msg: Message) {
+    async fn message(&self, ctx: Context, msg: Message) {
         let copied_channel: u64 = env::var("C_CHANNEL_ID")
             .expect("Expected C_CHANNEL_ID in environment")
             .parse()
@@ -49,47 +56,56 @@ impl EventHandler for Handler {
             let user_message = format!("{}: {}\n", msg.author.name, msg.content.replace('\n', " - "));
             file.write_all(user_message.as_bytes())
                 .expect("Couldn't write to file");
-            unsafe {
-                COUNT += 1;
-                COUNT_LIST.push(user_message);
+            // update globals
+            let mut data = ctx.data.write().await;
+            if let Some(counter) = data.get_mut::<Count>() {
+                *counter += 1;
+            }
+            if let Some(list) = data.get_mut::<CountList>() {
+                list.push(user_message);
             }
         }
     }
     //commands handler
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            unsafe {
-                let content = match command.data.name.as_str() {
-                    "döner" => commands::doener::run(&command.data.options),
-                    "count" => commands::count::run(&command.data.options, COUNT, &mut COUNT_LIST),
-                    "set_birthday" => {
-                        commands::set_birthday::run(&command.data.options, command.user.id.into())
-                    }
-                    "next_birthdays" => commands::next_birthdays::run(&command.data.options),
-                    _ => {
-                        let mut embed = CreateEmbed::default();
-                        embed.title("Command not Found!");
-                        ("".to_string(), embed)
-                    }
-                };
-
-                if let Err(why) = command
-                    .create_interaction_response(&ctx.http, |response| {
-                        response
-                            .kind(InteractionResponseType::ChannelMessageWithSource)
-                            .interaction_response_data(|message| {
-                                message.content(content.0).add_embed(content.1)
-                            })
-                    })
-                    .await
-                {
-                    println!("Cannot respond to slash command: {}", why);
+            let content = match command.data.name.as_str() {
+                "döner" => commands::doener::run(&command.data.options),
+                "count" => {
+                    let data = ctx.data.read().await;
+                    commands::count::run(
+                        &command.data.options,
+                        data.get::<Count>().unwrap_or(&0),
+                        data.get::<CountList>().unwrap_or(&Vec::new()),
+                    )
                 }
+                "set_birthday" => {
+                    commands::set_birthday::run(&command.data.options, command.user.id.into())
+                }
+                "next_birthdays" => commands::next_birthdays::run(&command.data.options),
+                _ => {
+                    let mut embed = CreateEmbed::default();
+                    embed.title("Command not Found!");
+                    ("".to_string(), embed)
+                }
+            };
+
+            if let Err(why) = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response
+                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|message| {
+                            message.content(content.0).add_embed(content.1)
+                        })
+                })
+                .await
+            {
+                println!("Cannot respond to slash command: {}", why);
             }
         }
     }
 
-    //setting stuff up on start
+    // setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!("{} is connected!", ready.user.name);
 
@@ -98,6 +114,7 @@ impl EventHandler for Handler {
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
+            .create(true)
             .open("citations.txt")
             .expect("Couldn't open citations.txt");
 
@@ -138,6 +155,13 @@ async fn main() {
         .event_handler(Handler)
         .await
         .expect("Error creating client");
+
+    // setting global vars
+    {
+        let mut data = client.data.write().await;
+        data.insert::<Count>(0);
+        data.insert::<CountList>(Vec::new());
+    }
 
     // Finally, start a single shard, and start listening to events.
     if let Err(why) = client.start().await {
