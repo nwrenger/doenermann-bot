@@ -1,28 +1,34 @@
-use serenity::builder::{CreateApplicationCommand, CreateEmbed};
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use serenity::{
+    all::{CreateCommand, ResolvedOption},
+    builder::CreateEmbed,
+};
 
-pub fn run(
-    _options: &[CommandDataOption],
-    count: &i32,
-    count_list: &Vec<String>,
-) -> (String, CreateEmbed) {
-    let mut embed = CreateEmbed::default();
-    embed.title(format!(
-        "Already recorded messages: {}\nList of already recorded messages:",
-        count
-    ));
-    for i in 0..count_list.len() {
+use crate::ResponseContent;
+
+pub fn run(_options: &[ResolvedOption], count: &i32, count_list: &[String]) -> ResponseContent {
+    let title = if count_list.is_empty() {
+        "No messages have been recorded after last startup!".to_string()
+    } else {
+        format!(
+            "Already recorded messages: {}\nList of already recorded messages:",
+            count
+        )
+    };
+    let mut embed = CreateEmbed::default().title(title);
+    for (i, item) in count_list.iter().enumerate() {
         if i < 25 {
-            embed.field("", count_list[i].clone(), false);
+            embed = embed.field("", item, false);
         } else {
-            embed.field("", "...", false);
+            embed = embed.field("", "...", false);
         }
     }
-    ("".to_string(), embed)
+    ResponseContent {
+        text: "".to_string(),
+        embed,
+    }
 }
 
-pub fn _register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command
-        .name("count")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("count")
         .description("Gives the Count of the already Recorded Messages after last Start")
 }

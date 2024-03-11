@@ -1,7 +1,11 @@
 use chrono::{Datelike, Local, NaiveDate};
 use csv::Reader;
-use serenity::builder::{CreateApplicationCommand, CreateEmbed};
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use serenity::{
+    all::{CreateCommand, ResolvedOption},
+    builder::CreateEmbed,
+};
+
+use crate::ResponseContent;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Row {
@@ -9,9 +13,7 @@ struct Row {
     user: u64,
 }
 
-pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
-    let mut embed = CreateEmbed::default();
-    embed.title("Next Birthdays:");
+pub fn run(_options: &[ResolvedOption]) -> ResponseContent {
     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
     let mut rows: Vec<Row> = rdr.deserialize().map(|result| result.unwrap()).collect();
     let now = Local::now().date_naive();
@@ -26,6 +28,8 @@ pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
         next_birthday.signed_duration_since(now).num_days().abs()
     });
 
+    let mut embed = CreateEmbed::default().title("Next Birthdays:");
+
     for i in rows.drain(..10) {
         let date = NaiveDate::parse_from_str(&i.birthday, "%Y-%m-%d").unwrap();
         let future = if date.with_year(now.year()) < now.with_year(now.year()) {
@@ -38,17 +42,18 @@ pub fn run(_options: &[CommandDataOption]) -> (String, CreateEmbed) {
         } else {
             Local::now().date_naive().years_since(date).unwrap() + 1
         };
-        embed.field(
+        embed = embed.field(
             future.format("%d %B %Y").to_string(),
             format!("<@{}> ({})", i.user, age),
             false,
         );
     }
-    ("".to_string(), embed)
+    ResponseContent {
+        text: "".to_string(),
+        embed,
+    }
 }
 
-pub fn _register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command
-        .name("next_birthdays")
-        .description("The next 10 Upcomming Birthdays")
+pub fn register() -> CreateCommand {
+    CreateCommand::new("next_birthdays").description("The next 10 Upcomming Birthdays")
 }
