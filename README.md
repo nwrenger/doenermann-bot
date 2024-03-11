@@ -30,3 +30,8 @@ ROLE_ID=The Role Id you give players when they join the server
 ```shell
 ./doenermann-bot
 ```
+
+Building Example (Cross):
+```
+cross build -r --target aarch64-unknown-linux-gnu
+```
