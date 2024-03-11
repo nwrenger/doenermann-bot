@@ -17,9 +17,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            exe: bot
+            exe: doenermann-bot
           - os: windows-latest
-            exe: bot.exe
+            exe: doenermann-bot.exe
 
     steps:
       - uses: actions/checkout@v4
