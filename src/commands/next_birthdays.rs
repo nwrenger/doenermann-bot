@@ -7,7 +7,7 @@ use serenity::{
 
 use crate::ResponseContent;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 struct Row {
     birthday: String,
     user: u64,
@@ -15,7 +15,10 @@ struct Row {
 
 pub fn run(_options: &[ResolvedOption]) -> ResponseContent {
     let mut rdr = Reader::from_path("birthdays.csv").unwrap();
-    let mut rows: Vec<Row> = rdr.deserialize().map(|result| result.unwrap()).collect();
+    let mut rows: Vec<Row> = rdr
+        .deserialize()
+        .map(|result| result.unwrap_or_default())
+        .collect();
     let now = Local::now().date_naive();
 
     rows.sort_by_key(|row| {

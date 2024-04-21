@@ -1,4 +1,4 @@
-use chrono::{Datelike, Local, NaiveDate};
+use chrono::{Local, NaiveDate};
 use csv::{Reader, Writer};
 use serde::{self};
 use serenity::all::{
@@ -7,7 +7,7 @@ use serenity::all::{
 
 use crate::ResponseContent;
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 struct Row {
     birthday: String,
     user: u64,
@@ -21,61 +21,67 @@ pub fn run(options: &[ResolvedOption], user: u64) -> ResponseContent {
                 serenity::all::ResolvedValue::String(str) => str,
                 _ => "",
             };
-            if NaiveDate::parse_from_str(value, date_fmt).is_ok()
-                && Local::now()
-                    .date_naive()
-                    .years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap())
-                    .is_some()
-            {
-                let mut rdr = Reader::from_path("birthdays.csv").unwrap();
-                let mut rows: Vec<Row> = rdr.deserialize().map(|result| result.unwrap()).collect();
 
-                // Update the user's birthday or add a new row if it doesn't exist
-                let date = NaiveDate::parse_from_str(value, date_fmt).unwrap();
-                let mut found = false;
-                for row in rows.iter_mut() {
-                    if row.user == user {
-                        row.birthday = date.to_string();
-                        found = true;
-                        break;
-                    }
+            let date = if let Ok(date) = NaiveDate::parse_from_str(value, date_fmt) {
+                if Local::now().date_naive().years_since(date).is_some() {
+                    Some(date)
+                } else {
+                    None
                 }
-                if !found {
-                    rows.push(Row {
-                        birthday: date.to_string(),
-                        user,
-                    });
-                }
-
-                // Write the updated data back to the CSV file
-                let mut wtr = Writer::from_path("birthdays.csv").unwrap();
-                for row in rows.iter() {
-                    wtr.serialize(row).unwrap();
-                }
-                wtr.flush().unwrap();
-
-                CreateEmbed::default().title("Your Birthday was set to: ".to_string() + value)
-            } else if Local::now()
-                .date_naive()
-                .years_since(NaiveDate::parse_from_str(value, date_fmt).unwrap())
-                .is_some()
-            {
-                CreateEmbed::default().title("Invalid Date!").description(
-                    NaiveDate::parse_from_str(value, date_fmt)
-                        .err()
-                        .unwrap()
-                        .to_string(),
-                )
             } else {
-                CreateEmbed::default()
-                    .title("Invalid Date!")
-                    .description(format!(
-                        "Stop it Erik! You can't set Dates over the current Year! ({})",
-                        Local::now().date_naive().year()
-                    ))
+                None
+            };
+
+            if let Some(date) = date {
+                let rdr = Reader::from_path("birthdays.csv");
+                if let Ok(mut rdr) = rdr {
+                    let mut rows: Vec<Row> = rdr
+                        .deserialize()
+                        .map(|result| result.unwrap_or_default())
+                        .collect();
+
+                    // Update the user's birthday or add a new row if it doesn't exist
+                    let mut found = false;
+                    for row in rows.iter_mut() {
+                        if row.user == user {
+                            row.birthday = date.to_string();
+                            found = true;
+                            break;
+                        }
+                    }
+                    if !found {
+                        rows.push(Row {
+                            birthday: date.to_string(),
+                            user,
+                        });
+                    }
+
+                    // Write the updated data back to the CSV file
+                    let wtr = Writer::from_path("birthdays.csv");
+                    if let Ok(mut wtr) = wtr {
+                        for row in rows.iter() {
+                            wtr.serialize(row).unwrap_or_default()
+                        }
+                        if let Err(e) = wtr.flush() {
+                            CreateEmbed::default()
+                                .title("An error occurred: ".to_string() + &e.to_string())
+                        } else {
+                            CreateEmbed::default()
+                                .title("Your Birthday was set to: ".to_string() + value)
+                        }
+                    } else {
+                        CreateEmbed::default()
+                            .title("An Error occurred: Couldn't write to CSV File".to_string())
+                    }
+                } else {
+                    CreateEmbed::default()
+                        .title("An Error occurred: Couldn't read CSV File".to_string())
+                }
+            } else {
+                CreateEmbed::default().title("Invalid date: ".to_string() + value)
             }
         }
-        _ => CreateEmbed::default().title("Expected Input, nothing given!".to_string()),
+        _ => CreateEmbed::default().title("Expected Option, nothing given!".to_string()),
     };
     ResponseContent {
         text: "".to_string(),
