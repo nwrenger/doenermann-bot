@@ -32,3 +32,8 @@ ROLE_ID=The Role Id you give players when they join the server
 ```
 cross build -r --target aarch64-unknown-linux-gnu
 ```
+
+## Todos
+
+- Generalize Error Handling
+- Add MAL Scoreboard/List (unsure about what exactly I am going to add)
