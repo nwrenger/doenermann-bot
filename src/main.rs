@@ -110,7 +110,19 @@ impl EventHandler for Handler {
                 )
                 .await
             {
-                println!("Cannot respond to slash command: {}", why);
+                command
+                    .create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new().add_embed(
+                                CreateEmbed::default()
+                                    .color(Colour::RED)
+                                    .title(format!("An Error occurred: {why}!")),
+                            ),
+                        ),
+                    )
+                    .await
+                    .unwrap_or_default();
             };
         }
     }

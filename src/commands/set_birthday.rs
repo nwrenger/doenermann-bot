@@ -75,7 +75,7 @@ pub fn run(options: &[ResolvedOption], user: u64) -> ResponseContent {
                     ))
             }
         }
-        _ => panic!("Expected String type"),
+        _ => CreateEmbed::default().title("Expected Input, nothing given!".to_string()),
     };
     ResponseContent {
         text: "".to_string(),
@@ -86,9 +86,12 @@ pub fn run(options: &[ResolvedOption], user: u64) -> ResponseContent {
 pub fn register() -> CreateCommand {
     CreateCommand::new("set_birthday")
         .description("Set your Birhtday")
-        .add_option(CreateCommandOption::new(
-            CommandOptionType::String,
-            "birth",
-            "Format: Day.Month.Year like 02.02.2007",
-        ))
+        .add_option(
+            CreateCommandOption::new(
+                CommandOptionType::String,
+                "birth",
+                "Format: Day.Month.Year like 02.02.2007",
+            )
+            .required(true),
+        )
 }
