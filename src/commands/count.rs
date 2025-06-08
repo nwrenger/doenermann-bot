@@ -16,16 +16,14 @@ pub fn run(_options: &[ResolvedOption], count: &i32, count_list: &[String]) -> R
     };
     let mut embed = CreateEmbed::default().title(title);
     for (i, item) in count_list.iter().enumerate() {
-        if i < 25 {
+        // We have to get the first 24 items
+        if i < 24 {
             embed = embed.field("", item, false);
         } else {
             embed = embed.field("", "...", false);
         }
     }
-    ResponseContent {
-        text: "".to_string(),
-        embed,
-    }
+    ResponseContent::new_only_embed(embed)
 }
 
 pub fn register() -> CreateCommand {

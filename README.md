@@ -1,5 +1,5 @@
 # Dönermann-Bot
-A Repository with the Dönermann Bot used in a private Discord server of mine. It's using the Serenity rs libary. It can be forked and further used without any restrictions. 
+A Repository with the Dönermann Bot used in a private Discord server of mine. It's using the Serenity rs libary. It can be forked and further used without any restrictions.
 
 ## Now it can:
 - Copy Message of a Channel in a file
@@ -7,6 +7,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 - a normal ping(/döner) command
 - Add your birthday with /set_birthday
 - show the next upcomming birthdays(/next_birthdays)
+- delete a birthday of an user with /delete_birthday
 - Give a user a Member Role when the user joins the server
 
 ## Dependencies:
@@ -14,7 +15,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 - just run the bin file provided in the release
 
 ## Usage:
-- First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot 
+- First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot
 - After that you paste your bot token in .env and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
 - Now you have to add your server id, the channel id(where you like the files to be copied from) and the id of the Member role(you have to create those) to the .env file:
 ```enviroment

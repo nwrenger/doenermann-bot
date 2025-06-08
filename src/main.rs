@@ -1,4 +1,5 @@
 mod commands;
+mod error;
 
 use chrono::offset::Local;
 use dotenv::dotenv;
@@ -14,9 +15,24 @@ use serenity::model::id::GuildId;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+const BIRTHDAYS_PATH: &str = "birthdays.csv";
+
 struct ResponseContent {
     text: String,
     embed: CreateEmbed,
+}
+
+impl ResponseContent {
+    fn new(text: String, embed: CreateEmbed) -> Self {
+        Self { text, embed }
+    }
+
+    fn new_only_embed(embed: CreateEmbed) -> Self {
+        Self {
+            text: String::new(),
+            embed,
+        }
+    }
 }
 
 struct Count;
@@ -78,7 +94,6 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Command(command) = interaction {
             let content = match command.data.name.as_str() {
-                "döner" => commands::doener::run(&command.data.options()),
                 "count" => {
                     let data = ctx.data.read().await;
                     commands::count::run(
@@ -87,17 +102,15 @@ impl EventHandler for Handler {
                         data.get::<CountList>().unwrap_or(&Vec::new()),
                     )
                 }
+                "delete_birthday" => commands::delete_birthday::run(&command.data.options()),
+                "döner" => commands::doener::run(&command.data.options()),
+                "next_birthdays" => commands::next_birthdays::run(&command.data.options()),
                 "set_birthday" => {
                     commands::set_birthday::run(&command.data.options(), command.user.id.into())
                 }
-                "next_birthdays" => commands::next_birthdays::run(&command.data.options()),
-                _ => {
-                    let embed = CreateEmbed::default().title("Command not Found!");
-                    ResponseContent {
-                        text: "".to_string(),
-                        embed,
-                    }
-                }
+                _ => ResponseContent::new_only_embed(
+                    CreateEmbed::default().title("Command not Found!"),
+                ),
             };
             if let Err(why) = command
                 .create_response(
@@ -146,7 +159,7 @@ impl EventHandler for Handler {
         let _file_birth = OpenOptions::new()
             .append(true)
             .create(true)
-            .open("birthdays.csv")
+            .open(BIRTHDAYS_PATH)
             .expect("Couldn't open birthdays.csv");
 
         let guild_id = GuildId::new(
@@ -160,8 +173,9 @@ impl EventHandler for Handler {
             .set_commands(
                 &ctx.http,
                 vec![
-                    commands::doener::register(),
                     commands::count::register(),
+                    commands::delete_birthday::register(),
+                    commands::doener::register(),
                     commands::next_birthdays::register(),
                     commands::set_birthday::register(),
                 ],
