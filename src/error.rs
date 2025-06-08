@@ -1,6 +1,8 @@
-use serenity::all::CreateEmbed;
+use serenity::all::{Colour, CreateEmbed};
 
 use crate::ResponseContent;
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub enum Error {
     /// An expected option didn't resolve
@@ -13,24 +15,36 @@ pub enum Error {
     WriteCSV,
     /// Other csv related error
     OtherCSV(String),
+    /// Command not found
+    CommandNotFound,
 }
 
 impl Error {
     pub fn error_message(self) -> ResponseContent {
         let embed = match self {
             Error::OptionResolve => {
-                CreateEmbed::default().title(String::from("Got invalid option"))
+                CreateEmbed::default().title(String::from("Got invalid option!"))
             }
-            Error::InvalidDate(e) => CreateEmbed::default().title(format!("Invalid date, {e}")),
+            Error::InvalidDate(e) => CreateEmbed::default().title(format!("Invalid Date: {e}!")),
             Error::ReadCSV => {
-                CreateEmbed::default().title(String::from("Couldn't read the CSV file"))
+                CreateEmbed::default().title(String::from("Couldn't read the CSV file!"))
             }
             Error::WriteCSV => {
-                CreateEmbed::default().title(String::from("Couldn't write to the CSV file"))
+                CreateEmbed::default().title(String::from("Couldn't write to the CSV file!"))
             }
-            Error::OtherCSV(e) => CreateEmbed::default().title(e),
-        };
+            Error::OtherCSV(e) => CreateEmbed::default().title(format!("Unknown CSV Error: {e}!")),
+            Error::CommandNotFound => {
+                CreateEmbed::default().title(String::from("Command not Found!"))
+            }
+        }
+        .color(Colour::RED);
 
         ResponseContent::new_only_embed(embed)
+    }
+}
+
+impl From<chrono::ParseError> for Error {
+    fn from(e: chrono::ParseError) -> Error {
+        Error::InvalidDate(e.to_string())
     }
 }

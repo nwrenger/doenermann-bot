@@ -3,9 +3,14 @@ use serenity::{
     builder::CreateEmbed,
 };
 
+use crate::error::Result;
 use crate::ResponseContent;
 
-pub fn run(_options: &[ResolvedOption], count: &i32, count_list: &[String]) -> ResponseContent {
+pub fn run(
+    _options: &[ResolvedOption],
+    count: &i32,
+    count_list: &[String],
+) -> Result<ResponseContent> {
     let title = if count_list.is_empty() {
         "No messages have been recorded after last startup!".to_string()
     } else {
@@ -23,7 +28,8 @@ pub fn run(_options: &[ResolvedOption], count: &i32, count_list: &[String]) -> R
             embed = embed.field("", "...", false);
         }
     }
-    ResponseContent::new_only_embed(embed)
+
+    Ok(ResponseContent::new_only_embed(embed))
 }
 
 pub fn register() -> CreateCommand {

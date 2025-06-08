@@ -5,11 +5,11 @@ use serenity::all::{
 
 use crate::{
     commands::{load_birthdays, save_birthdays, BirthdayRow},
-    error::Error,
+    error::{Error, Result},
     ResponseContent,
 };
 
-pub fn run(options: &[ResolvedOption], user: u64) -> ResponseContent {
+pub fn run(options: &[ResolvedOption], user: u64) -> Result<ResponseContent> {
     let date_fmt = "%d.%m.%Y";
     let year_option = &options[0];
     let value = match year_option.value {
@@ -17,47 +17,36 @@ pub fn run(options: &[ResolvedOption], user: u64) -> ResponseContent {
         _ => "",
     };
 
-    let date = if let Ok(date) = NaiveDate::parse_from_str(value, date_fmt) {
-        if Local::now().date_naive().years_since(date).is_some() {
-            Some(date)
-        } else {
-            None
-        }
+    let parsed_date = NaiveDate::parse_from_str(value, date_fmt)?;
+    let date = if Local::now().date_naive().years_since(parsed_date).is_some() {
+        parsed_date
     } else {
-        None
+        return Err(Error::InvalidDate(format!(
+            " {parsed_date}. You cannot go back in time"
+        )));
     };
 
-    if let Some(date) = date {
-        match load_birthdays() {
-            Ok(mut rows) => {
-                let mut found = false;
-                for row in rows.iter_mut() {
-                    if row.user == user {
-                        row.birthday = date.to_string();
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
-                    rows.push(BirthdayRow {
-                        birthday: date.to_string(),
-                        user,
-                    });
-                }
-
-                if let Err(e) = save_birthdays(&rows) {
-                    return e.error_message();
-                }
-
-                ResponseContent::new_only_embed(
-                    CreateEmbed::default().title(format!("Your Birthday was set to: {value}")),
-                )
-            }
-            Err(e) => e.error_message(),
+    let mut rows = load_birthdays()?;
+    let mut found = false;
+    for row in rows.iter_mut() {
+        if row.user == user {
+            row.birthday = date.to_string();
+            found = true;
+            break;
         }
-    } else {
-        Error::InvalidDate(value.to_string()).error_message()
     }
+    if !found {
+        rows.push(BirthdayRow {
+            birthday: date.to_string(),
+            user,
+        });
+    }
+
+    save_birthdays(&rows)?;
+
+    Ok(ResponseContent::new_only_embed(
+        CreateEmbed::default().title(format!("Your Birthday was set to: {value}")),
+    ))
 }
 
 pub fn register() -> CreateCommand {

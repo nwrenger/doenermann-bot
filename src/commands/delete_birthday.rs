@@ -5,30 +5,36 @@ use serenity::all::{
 use serenity::builder::CreateEmbed;
 
 use crate::commands::{load_birthdays, save_birthdays};
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::ResponseContent;
 
-pub fn run(options: &[ResolvedOption]) -> ResponseContent {
+pub fn run(options: &[ResolvedOption]) -> Result<ResponseContent> {
     let user_option = &options[0];
 
     if let ResolvedValue::User(user, _) = user_option.value {
-        match load_birthdays() {
-            Ok(mut rows) => {
-                rows.retain(|e| e.user != Into::<u64>::into(user.id));
+        let mut rows = load_birthdays()?;
+        let original_len = rows.len();
+        rows.retain(|e| e.user != Into::<u64>::into(user.id));
 
-                if let Err(e) = save_birthdays(&rows) {
-                    return e.error_message();
-                }
+        save_birthdays(&rows)?;
 
-                ResponseContent::new_only_embed(CreateEmbed::default().title(format!(
+        if rows.len() != original_len {
+            Ok(ResponseContent::new_only_embed(
+                CreateEmbed::default().title(format!(
                     "The birthday of {} was successfully deleted!",
                     user.name
-                )))
-            }
-            Err(e) => e.error_message(),
+                )),
+            ))
+        } else {
+            Ok(ResponseContent::new_only_embed(
+                CreateEmbed::default().title(format!(
+                    "The selected user {} is not inside the birthdays list!",
+                    user.name
+                )),
+            ))
         }
     } else {
-        Error::OptionResolve.error_message()
+        Err(Error::OptionResolve)
     }
 }
 

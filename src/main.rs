@@ -15,6 +15,8 @@ use serenity::model::id::GuildId;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use crate::error::Error;
+
 const BIRTHDAYS_PATH: &str = "birthdays.csv";
 
 struct ResponseContent {
@@ -108,35 +110,50 @@ impl EventHandler for Handler {
                 "set_birthday" => {
                     commands::set_birthday::run(&command.data.options(), command.user.id.into())
                 }
-                _ => ResponseContent::new_only_embed(
-                    CreateEmbed::default().title("Command not Found!"),
-                ),
+                _ => Err(Error::CommandNotFound),
             };
-            if let Err(why) = command
-                .create_response(
-                    &ctx.http,
-                    CreateInteractionResponse::Message(
-                        CreateInteractionResponseMessage::new()
-                            .content(content.text)
-                            .add_embed(content.embed),
-                    ),
-                )
-                .await
-            {
-                command
-                    .create_response(
-                        &ctx.http,
-                        CreateInteractionResponse::Message(
-                            CreateInteractionResponseMessage::new().add_embed(
-                                CreateEmbed::default()
-                                    .color(Colour::RED)
-                                    .title(format!("An Error occurred: {why}!")),
+            match content {
+                Ok(content) => {
+                    if let Err(why) = command
+                        .create_response(
+                            &ctx.http,
+                            CreateInteractionResponse::Message(
+                                CreateInteractionResponseMessage::new()
+                                    .content(content.text)
+                                    .add_embed(content.embed),
                             ),
-                        ),
-                    )
-                    .await
-                    .unwrap_or_default();
-            };
+                        )
+                        .await
+                    {
+                        command
+                            .create_response(
+                                &ctx.http,
+                                CreateInteractionResponse::Message(
+                                    CreateInteractionResponseMessage::new().add_embed(
+                                        CreateEmbed::default()
+                                            .color(Colour::RED)
+                                            .title(format!("An unknwon Error occurred: {why}!")),
+                                    ),
+                                ),
+                            )
+                            .await
+                            .unwrap_or_default();
+                    };
+                }
+                Err(e) => {
+                    let error_message = e.error_message();
+                    command
+                        .create_response(
+                            &ctx.http,
+                            CreateInteractionResponse::Message(
+                                CreateInteractionResponseMessage::new()
+                                    .add_embed(error_message.embed),
+                            ),
+                        )
+                        .await
+                        .unwrap_or_default();
+                }
+            }
         }
     }
 
