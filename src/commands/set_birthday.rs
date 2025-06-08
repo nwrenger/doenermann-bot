@@ -21,8 +21,8 @@ pub fn run(options: &[ResolvedOption], user: u64) -> Result<ResponseContent> {
     let date = if Local::now().date_naive().years_since(parsed_date).is_some() {
         parsed_date
     } else {
-        return Err(Error::InvalidDate(format!(
-            " {parsed_date}. You cannot go back in time"
+        return Err(Error::InvalidDate(String::from(
+            "You cannot go back in time",
         )));
     };
 
