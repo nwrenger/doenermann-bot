@@ -11,7 +11,6 @@ use std::{env, vec};
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
 use serenity::model::gateway::Ready;
-use serenity::model::id::GuildId;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
@@ -159,7 +158,15 @@ impl EventHandler for Handler {
 
     // setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        println!(
+            "{} is connected with Servers {:?}!",
+            ready.user.name,
+            ready
+                .guilds
+                .iter()
+                .map(|f| f.id.to_string())
+                .collect::<Vec<String>>()
+        );
 
         let copy_message = format!("[Info] Begin Copying on {}\n", Local::now().date_naive());
 
@@ -179,15 +186,8 @@ impl EventHandler for Handler {
             .open(BIRTHDAYS_PATH)
             .expect("Couldn't open birthdays.csv");
 
-        let guild_id = GuildId::new(
-            env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
-        );
-
-        guild_id
-            .set_commands(
+        for UnavailableGuild { id, .. } in ready.guilds {
+            id.set_commands(
                 &ctx.http,
                 vec![
                     commands::count::register(),
@@ -199,6 +199,7 @@ impl EventHandler for Handler {
             )
             .await
             .unwrap();
+        }
     }
 }
 
