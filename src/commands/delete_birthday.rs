@@ -1,22 +1,41 @@
 use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, Permissions, ResolvedOption,
-    ResolvedValue,
+    CommandOptionType, CreateCommand, CreateCommandOption, ResolvedOption, ResolvedValue,
 };
 use serenity::builder::CreateEmbed;
 
 use crate::commands::{load_birthdays, save_birthdays};
+use crate::config::Config;
 use crate::error::{Error, Result};
 use crate::ResponseContent;
 
-pub fn run(options: &[ResolvedOption]) -> Result<ResponseContent> {
+pub fn run(
+    options: &[ResolvedOption],
+    config: &Config,
+    current_user: u64,
+) -> Result<ResponseContent> {
     let user_option = &options[0];
 
     if let ResolvedValue::User(user, _) = user_option.value {
-        let mut rows = load_birthdays()?;
+        // Check if the current user deletes themselves
+        // Otherwise check if the current user is an admin
+        // If not return an unauthorized error
+        let selected = user.id.get();
+        if selected != current_user {
+            let found = config
+                .server
+                .admins
+                .iter()
+                .any(|u| current_user.to_string() == *u);
+            if !found {
+                return Err(Error::Unauthorized);
+            }
+        }
+
+        let mut rows = load_birthdays(&config.paths.birthdays)?;
         let original_len = rows.len();
         rows.retain(|e| e.user != Into::<u64>::into(user.id));
 
-        save_birthdays(&rows)?;
+        save_birthdays(&config.paths.birthdays, &rows)?;
 
         if rows.len() != original_len {
             Ok(ResponseContent::new_only_embed(
@@ -40,8 +59,7 @@ pub fn run(options: &[ResolvedOption]) -> Result<ResponseContent> {
 
 pub fn register() -> CreateCommand {
     CreateCommand::new("delete_birthday")
-        .description("Delete a specific birthday. Please note: Only admins are able to do that!")
-        .default_member_permissions(Permissions::CREATE_EVENTS)
+        .description("Delete a specific birthday. Please note: Only admins are able to delete the birthdays of other people!")
         .add_option(
             CreateCommandOption::new(CommandOptionType::User, "user", "The selected user")
                 .required(true),

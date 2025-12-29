@@ -1,0 +1,19 @@
+[bot]
+# The Bot Token
+token = ""
+# A date format used for displaying dates inside the bot messages, default is `%d.%m.%Y`
+date_format = "%d.%m.%Y"
+
+[paths]
+# Path to the birthdays file
+birthdays = "birthdays.csv"
+# Path to the messages file
+messages = "citations.txt"
+
+[server]
+# Id of the copy channel
+copy_channel = ""
+# Id of the role which should be added on join
+role_on_join = ""
+# Id of the bot's admins, can be multiple
+admins = [ "" ]

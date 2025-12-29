@@ -1,14 +1,11 @@
 use chrono::{Datelike, Local, NaiveDate};
-use serenity::{
-    all::{CreateCommand, ResolvedOption},
-    builder::CreateEmbed,
-};
+use serenity::{all::CreateCommand, builder::CreateEmbed};
 
-use crate::error::Result;
 use crate::{commands::load_birthdays, ResponseContent};
+use crate::{config::Config, error::Result};
 
-pub fn run(_options: &[ResolvedOption]) -> Result<ResponseContent> {
-    let mut rows = load_birthdays()?;
+pub fn run(config: &Config) -> Result<ResponseContent> {
+    let mut rows = load_birthdays(&config.paths.birthdays)?;
     let now = Local::now().date_naive();
 
     rows.sort_by_key(|row| {
@@ -23,7 +20,9 @@ pub fn run(_options: &[ResolvedOption]) -> Result<ResponseContent> {
 
     let mut embed = CreateEmbed::default().title("Next Birthdays:");
 
-    for i in rows.drain(..10) {
+    let length = if rows.len() < 10 { rows.len() } else { 10 };
+
+    for i in rows.drain(..length) {
         let date = NaiveDate::parse_from_str(&i.birthday, "%Y-%m-%d")?;
         let future = if date.with_year(now.year()) < now.with_year(now.year()) {
             date.with_year(now.year() + 1).unwrap_or_default()
@@ -47,6 +46,10 @@ pub fn run(_options: &[ResolvedOption]) -> Result<ResponseContent> {
             format!("<@{}> ({})", i.user, age),
             false,
         );
+    }
+
+    if length == 0 {
+        embed = embed.field(String::new(), String::from("None recorded yet!"), false);
     }
 
     Ok(ResponseContent::new_only_embed(embed))

@@ -1,12 +1,13 @@
 mod commands;
+mod config;
 mod error;
 
 use chrono::offset::Local;
-use dotenv::dotenv;
 use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::{env, vec};
+use std::path::PathBuf;
+use std::vec;
 
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
@@ -14,9 +15,8 @@ use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use crate::config::Config;
 use crate::error::Error;
-
-const BIRTHDAYS_PATH: &str = "birthdays.csv";
 
 struct ResponseContent {
     text: String,
@@ -36,62 +36,76 @@ impl ResponseContent {
     }
 }
 
-struct Count;
-struct CountList;
+#[derive(Default)]
+struct Counter {
+    count: i32,
+    list: Vec<String>,
+}
+
+impl TypeMapKey for Counter {
+    type Value = Counter;
+}
+
 struct Handler;
 
-impl TypeMapKey for Count {
-    type Value = i32;
-}
-
-impl TypeMapKey for CountList {
-    type Value = Vec<String>;
-}
-
 const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CONFIG_PATH: &str = "config.toml";
 
 #[async_trait]
 impl EventHandler for Handler {
-    //add a role specified in the env on server join
+    // Add a role specified in the config on server join
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        let role_id: u64 = env::var("ROLE_ID")
-            .expect("Expected ROLE_ID in environment")
+        let data = ctx.data.read().await;
+        let config = data.get::<Config>().expect("Expected a Config");
+
+        let role_id: u64 = config
+            .server
+            .role_on_join
             .parse()
-            .expect("ROLE_ID must be an Integer!");
+            .expect("Role on join must be a valid integer string!");
+
         new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
-    //Copies text messages of a certain channel(specified in the env, C_CHANNEL_ID) in a file named "citatins.txt".
-    //It also adds and increments the values (COUNT,COUNT_LIST) used in the count command.
-    async fn message(&self, ctx: Context, msg: Message) {
-        let copied_channel: u64 = env::var("C_CHANNEL_ID")
-            .expect("Expected C_CHANNEL_ID in environment")
-            .parse()
-            .expect("C_CHANNEL_ID must be an Integer!");
 
-        let mut file = OpenOptions::new()
+    // Copies text messages of a certain channel(specified in the config) in a file.
+    // It also adds and increments the Counter used in the count command.
+    async fn message(&self, ctx: Context, msg: Message) {
+        let data = ctx.data.read().await;
+        let config = data.get::<Config>().expect("Expected a Config");
+
+        let copied_channel: u64 = config
+            .server
+            .copy_channel
+            .parse()
+            .expect("Copied Channel must be a valid integer string!");
+
+        let mut messages_file = OpenOptions::new()
             .append(true)
-            .open("citations.txt")
-            .expect("Couldn't open citations.txt");
+            .open(&config.paths.messages)
+            .expect(&format!("Couldn't open {}", &config.paths.messages));
 
         if msg.channel_id == ChannelId::new(copied_channel) {
             let user_message = format!(
-                "{}: {}\n",
+                "{}: {} | {}\n",
                 msg.author.name,
-                msg.content.replace('\n', " - ")
+                msg.content.replace('\n', " - "),
+                msg.timestamp
             );
-            file.write_all(user_message.as_bytes())
+
+            messages_file
+                .write_all(user_message.as_bytes())
                 .expect("Couldn't write to file");
-            // update globals
+
+            // update counter
             let mut data = ctx.data.write().await;
-            if let Some(counter) = data.get_mut::<Count>() {
-                *counter += 1;
-            }
-            if let Some(list) = data.get_mut::<CountList>() {
-                list.push(user_message);
+            if let Some(counter) = data.get_mut::<Counter>() {
+                counter.count += 1;
+                counter.list.push(user_message);
             }
         }
     }
-    //commands handler
+
+    // Commands handler
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::Command(command) = interaction {
             let content = match command.data.name.as_str() {
@@ -99,15 +113,29 @@ impl EventHandler for Handler {
                     let data = ctx.data.read().await;
                     commands::count::run(
                         &command.data.options(),
-                        data.get::<Count>().unwrap_or(&0),
-                        data.get::<CountList>().unwrap_or(&Vec::new()),
+                        data.get::<Counter>().unwrap_or(&Counter::default()),
                     )
                 }
-                "delete_birthday" => commands::delete_birthday::run(&command.data.options()),
+                "delete_birthday" => {
+                    let data = ctx.data.read().await;
+                    commands::delete_birthday::run(
+                        &command.data.options(),
+                        data.get::<Config>().unwrap_or(&Config::new()),
+                        command.user.id.into(),
+                    )
+                }
                 "döner" => commands::doener::run(&command.data.options()),
-                "next_birthdays" => commands::next_birthdays::run(&command.data.options()),
+                "next_birthdays" => {
+                    let data = ctx.data.read().await;
+                    commands::next_birthdays::run(data.get::<Config>().unwrap_or(&Config::new()))
+                }
                 "set_birthday" => {
-                    commands::set_birthday::run(&command.data.options(), command.user.id.into())
+                    let data = ctx.data.read().await;
+                    commands::set_birthday::run(
+                        &command.data.options(),
+                        data.get::<Config>().unwrap_or(&Config::new()),
+                        command.user.id.into(),
+                    )
                 }
                 _ => Err(Error::CommandNotFound),
             };
@@ -156,7 +184,7 @@ impl EventHandler for Handler {
         }
     }
 
-    // setting stuff up on start
+    // Setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!(
             "{} is connected with Servers {:?}!",
@@ -169,22 +197,24 @@ impl EventHandler for Handler {
         );
 
         let copy_message = format!("[Info] Begin Copying on {}\n", Local::now().date_naive());
+        let data = ctx.data.read().await;
+        let config = data.get::<Config>().expect("Expected a Config");
 
-        let mut file_cit = OpenOptions::new()
+        let mut messages_file = OpenOptions::new()
             .append(true)
             .create(true)
-            .open("citations.txt")
-            .expect("Couldn't open citations.txt");
+            .open(&config.paths.messages)
+            .expect(&format!("Couldn't open {}", &config.paths.messages));
 
-        file_cit
+        messages_file
             .write_all(copy_message.as_bytes())
             .expect("Couldn't write to file");
 
-        let _file_birth = OpenOptions::new()
+        let _birthday_file = OpenOptions::new()
             .append(true)
             .create(true)
-            .open(BIRTHDAYS_PATH)
-            .expect("Couldn't open birthdays.csv");
+            .open(&config.paths.birthdays)
+            .expect(&format!("Couldn't open {}", &config.paths.birthdays));
 
         for UnavailableGuild { id, .. } in ready.guilds {
             id.set_commands(
@@ -194,7 +224,7 @@ impl EventHandler for Handler {
                     commands::delete_birthday::register(),
                     commands::doener::register(),
                     commands::next_birthdays::register(),
-                    commands::set_birthday::register(),
+                    commands::set_birthday::register(&config),
                 ],
             )
             .await
@@ -206,26 +236,26 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
     println!("Starting bot on Version {}...", PKG_VERSION);
-    // Configure the client with your Discord bot token in the .env file.
-    dotenv().ok();
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+
+    let config_path = PathBuf::from(CONFIG_PATH);
+    let config = Config::read_or_create(config_path).expect("Expected a valid config!");
 
     let intents = GatewayIntents::all();
 
-    // Build our client.
-    let mut client = Client::builder(token, intents)
+    // Build our client
+    let mut client = Client::builder(&config.bot.token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");
 
-    // setting global vars
+    // Setting counter && config
     {
         let mut data = client.data.write().await;
-        data.insert::<Count>(0);
-        data.insert::<CountList>(Vec::new());
+        data.insert::<Counter>(Counter::default());
+        data.insert::<Config>(config);
     }
 
-    // Finally, start a single shard, and start listening to events.
+    // Finally, start a single shard, and start listening to events
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }

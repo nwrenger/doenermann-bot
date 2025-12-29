@@ -1,39 +1,58 @@
 # Dönermann-Bot
+
 A Repository with the Dönermann Bot used in a private Discord server of mine. It's using the Serenity rs libary. It can be forked and further used without any restrictions.
 
 ## Now it can:
+
 - Copy Message of a Channel in a file
-- Show with a command how many were copied(/count)
-- a normal ping(/döner) command
-- Add your birthday with /set_birthday
-- show the next upcoming birthdays(/next_birthdays)
-- delete a birthday of an user with /delete_birthday
-- Give a user a Member Role when the user joins the server
+- Show with a command how many were copied: `/count`
+- A normal ping command: `/döner`
+- Add your birthday: `/set_birthday`
+- Show the next upcoming birthdays: `/next_birthdays`
+- Delete a birthday of an user: `/delete_birthday`
+- Give an user a role when the user joins the server
 
 ## Dependencies:
-- all Dependencies are Stated in the Cargo.toml
-- just run the bin file provided in the release
+
+- All Dependencies are stated in the Cargo.toml
+- Just run the bin file provided in the release
 
 ## Usage:
+
 - First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot
-- After that you paste your bot token in .env and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
-- Now you have to add your server id, the channel id (where you like the files to be copied from) and the id of the Member role (you have to create those) to the .env file:
-```enviroment
-DISCORD_TOKEN=Your Token
-C_CHANNEL_ID=The copy Channel Id
-ROLE_ID=The Role Id you give players when they join the server
+- After that you paste your bot token in `config.toml` and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
+- Now you have to add your server id, the channel id (where you like the files to be copied from) and the id of the Member role (you have to create those) to the `config.toml` file:
+
+```toml
+[bot]
+# The Bot Token
+token = ""
+# A date format used for displaying dates inside the bot messages, default is `%d.%m.%Y`
+date_format = "%d.%m.%Y"
+
+[paths]
+# Path to the birthdays file
+birthdays = "birthdays.csv"
+# Path to the messages file
+messages = "citations.txt"
+
+[server]
+# Id of the copy channel
+copy_channel = ""
+# Id of the role which should be added on join
+role_on_join = ""
+# Id of the bot's admins, can be multiple
+admins = [ "" ]
 ```
-- You can start the bot by running the binary file provided in the release(make sure to give it the right permissions and that the files: .env, birthdays.csv and citations.txt are in the same directory as the bin file):
+
+- You can start the bot by running the binary file provided in the release (make sure to give it the right permissions and that the `config.toml` is in the same directory as the binary):
+
 ```shell
 ./doenermann-bot
 ```
 
 ## Building Example (Cross):
+
 ```
 cross build -r --target aarch64-unknown-linux-gnu
 ```
-
-## Todos
-
-- Generalize Error Handling
-- Add MAL Scoreboard/List (unsure about what exactly I am going to add)

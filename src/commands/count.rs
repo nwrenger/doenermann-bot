@@ -3,24 +3,20 @@ use serenity::{
     builder::CreateEmbed,
 };
 
-use crate::error::Result;
 use crate::ResponseContent;
+use crate::{error::Result, Counter};
 
-pub fn run(
-    _options: &[ResolvedOption],
-    count: &i32,
-    count_list: &[String],
-) -> Result<ResponseContent> {
-    let title = if count_list.is_empty() {
+pub fn run(_options: &[ResolvedOption], counter: &Counter) -> Result<ResponseContent> {
+    let title = if counter.list.is_empty() {
         "No messages have been recorded after last startup!".to_string()
     } else {
         format!(
             "Already recorded messages: {}\nList of already recorded messages:",
-            count
+            counter.count
         )
     };
     let mut embed = CreateEmbed::default().title(title);
-    for (i, item) in count_list.iter().enumerate() {
+    for (i, item) in counter.list.iter().enumerate() {
         // We have to get the first 24 items
         if i < 24 {
             embed = embed.field("", item, false);
