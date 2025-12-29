@@ -70,7 +70,7 @@ impl EventHandler for Handler {
     // Copies text messages of a certain channel(specified in the config) in a file.
     // It also adds and increments the Counter used in the count command.
     async fn message(&self, ctx: Context, msg: Message) {
-        let data = ctx.data.read().await;
+        let mut data = ctx.data.write().await;
         let config = data.get::<Config>().expect("Expected a Config");
 
         let copied_channel: u64 = config
@@ -97,7 +97,6 @@ impl EventHandler for Handler {
                 .expect("Couldn't write to file");
 
             // update counter
-            let mut data = ctx.data.write().await;
             if let Some(counter) = data.get_mut::<Counter>() {
                 counter.count += 1;
                 counter.list.push(user_message);
