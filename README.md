@@ -42,12 +42,12 @@ admins = [ "" ]
 
 - You can start the bot by running the binary file provided in the release, make sure to give it the right permissions and that the `config.toml` is in the same directory as the binary:
 
-```shell
+```sh
 ./doenermann-bot
 ```
 
 ## Building Example (Cross)
 
-```
+```sh
 cross build -r --target aarch64-unknown-linux-gnu
 ```
