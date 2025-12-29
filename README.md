@@ -2,7 +2,7 @@
 
 A Repository with the Dönermann Bot used in a private Discord server of mine. It's using the Serenity rs libary. It can be forked and further used without any restrictions.
 
-## Now it can:
+## Features
 
 - Copy Message of a Channel in a file
 - Show with a command how many were copied: `/count`
@@ -12,12 +12,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 - Delete a birthday of an user: `/delete_birthday`
 - Give an user a role when the user joins the server
 
-## Dependencies:
-
-- All Dependencies are stated in the Cargo.toml
-- Just run the bin file provided in the release
-
-## Usage:
+## Usage
 
 - First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot
 - After that you paste your bot token in `config.toml` and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
@@ -51,7 +46,7 @@ admins = [ "" ]
 ./doenermann-bot
 ```
 
-## Building Example (Cross):
+## Building Example (Cross)
 
 ```
 cross build -r --target aarch64-unknown-linux-gnu
