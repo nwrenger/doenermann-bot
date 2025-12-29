@@ -16,7 +16,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 
 - First you have to add an Application in the **[Discord Developer Portal](https://discord.com/developers/applications)** and create a bot
 - After that you paste your bot token in `config.toml` and have to enable all of the of the Privileged Gateway Intents options in the options of your bot
-- Now you have to add the copy channel id and the id of the join role, id of the admins, paths and date formatting to the `config.toml` file:
+- Now you have to add the copy channel id and the id of the join role, ids of the admins, paths and date formatting to the `config.toml` file:
 
 ```toml
 [bot]
