@@ -24,6 +24,8 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 token = ""
 # A date format used for displaying dates inside the bot messages, default is `%d.%m.%Y`
 date_format = "%d.%m.%Y"
+# A timestamp format used for displaying timestamps inside the copied messages file, default is `%Y-%m-%d %H:%M:%S UTC`
+timestamp_format = "%Y-%m-%d %H:%M:%S UTC"
 
 [paths]
 # Path to the birthdays file
@@ -36,7 +38,7 @@ messages = "citations.txt"
 copy_channel = ""
 # Id of the role which should be added on join
 role_on_join = ""
-# Id of the bot's admins, can be multiple
+# Id of the bot's admin, can be multiple
 admins = [ "" ]
 ```
 
