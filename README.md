@@ -4,7 +4,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 
 ## Features
 
-- Copy Message of a Channel in a file
+- Copy message of a channel to a file
 - Show with a command how many were copied: `/count`
 - A normal ping command: `/döner`
 - Add your birthday: `/set_birthday`
