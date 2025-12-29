@@ -82,7 +82,7 @@ impl EventHandler for Handler {
         let mut messages_file = OpenOptions::new()
             .append(true)
             .open(&config.paths.messages)
-            .expect(&format!("Couldn't open {}", &config.paths.messages));
+            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.messages));
 
         if msg.channel_id == ChannelId::new(copied_channel) {
             let user_message = format!(
@@ -96,7 +96,7 @@ impl EventHandler for Handler {
                 .write_all(user_message.as_bytes())
                 .expect("Couldn't write to file");
 
-            // update counter
+            // Update counter
             if let Some(counter) = data.get_mut::<Counter>() {
                 counter.count += 1;
                 counter.list.push(user_message);
@@ -203,7 +203,7 @@ impl EventHandler for Handler {
             .append(true)
             .create(true)
             .open(&config.paths.messages)
-            .expect(&format!("Couldn't open {}", &config.paths.messages));
+            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.messages));
 
         messages_file
             .write_all(copy_message.as_bytes())
@@ -213,7 +213,7 @@ impl EventHandler for Handler {
             .append(true)
             .create(true)
             .open(&config.paths.birthdays)
-            .expect(&format!("Couldn't open {}", &config.paths.birthdays));
+            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.birthdays));
 
         for UnavailableGuild { id, .. } in ready.guilds {
             id.set_commands(
