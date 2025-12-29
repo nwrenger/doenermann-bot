@@ -52,12 +52,12 @@ pub fn run(options: &[ResolvedOption], config: &Config, user: u64) -> Result<Res
 
 pub fn register(config: &Config) -> CreateCommand {
     CreateCommand::new("set_birthday")
-        .description("Set your Birhtday")
+        .description("Set your birthday date")
         .add_option(
             CreateCommandOption::new(
                 CommandOptionType::String,
                 "birth",
-                format!("Format: {}", &config.bot.date_format),
+                format!("Date format: {}", &config.bot.date_format),
             )
             .required(true),
         )

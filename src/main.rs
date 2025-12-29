@@ -3,12 +3,13 @@ mod config;
 mod error;
 
 use chrono::offset::Local;
-use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::vec;
+use time::format_description;
 
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
 use serenity::model::gateway::Ready;
@@ -62,7 +63,7 @@ impl EventHandler for Handler {
             .server
             .role_on_join
             .parse()
-            .expect("Role on join must be a valid integer string!");
+            .expect("Role on join must be a valid integer string");
 
         new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
@@ -77,7 +78,7 @@ impl EventHandler for Handler {
             .server
             .copy_channel
             .parse()
-            .expect("Copied Channel must be a valid integer string!");
+            .expect("Copied Channel must be a valid integer string");
 
         let mut messages_file = OpenOptions::new()
             .append(true)
@@ -86,10 +87,15 @@ impl EventHandler for Handler {
 
         if msg.channel_id == ChannelId::new(copied_channel) {
             let user_message = format!(
-                "{}: {} | {}\n",
+                "{} [{}]\n{}\n\n",
                 msg.author.name,
-                msg.content.replace('\n', " - "),
                 msg.timestamp
+                    .format(
+                        &format_description::parse(&config.bot.timestamp_format)
+                            .expect("Invalid copy message time format")
+                    )
+                    .expect("Copy message time formatting failed"),
+                msg.content
             );
 
             messages_file
@@ -186,7 +192,7 @@ impl EventHandler for Handler {
     // Setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
         println!(
-            "{} is connected with Servers {:?}!",
+            "'{}' is connected with Guilds (id): {:?}",
             ready.user.name,
             ready
                 .guilds
@@ -195,7 +201,7 @@ impl EventHandler for Handler {
                 .collect::<Vec<String>>()
         );
 
-        let copy_message = format!("[Info] Begin Copying on {}\n", Local::now().date_naive());
+        let copy_message = format!("[Info] Begin Copying on {}\n\n", Local::now().date_naive());
         let data = ctx.data.read().await;
         let config = data.get::<Config>().expect("Expected a Config");
 
@@ -234,7 +240,7 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-    println!("Starting bot on Version {}...", PKG_VERSION);
+    println!("Starting Bot (v{})", PKG_VERSION);
 
     let config_path = PathBuf::from(CONFIG_PATH);
     let config = Config::read_or_create(config_path).expect("Expected a valid config!");

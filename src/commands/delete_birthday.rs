@@ -59,9 +59,13 @@ pub fn run(
 
 pub fn register() -> CreateCommand {
     CreateCommand::new("delete_birthday")
-        .description("Delete a specific birthday. Please note: Only admins are able to delete the birthdays of other people!")
+        .description("Delete a saved birthday")
         .add_option(
-            CreateCommandOption::new(CommandOptionType::User, "user", "The selected user")
-                .required(true),
+            CreateCommandOption::new(
+                CommandOptionType::User,
+                "user",
+                "Select yourself, or another user if you are an admin",
+            )
+            .required(true),
         )
 }

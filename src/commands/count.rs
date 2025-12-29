@@ -30,5 +30,5 @@ pub fn run(_options: &[ResolvedOption], counter: &Counter) -> Result<ResponseCon
 
 pub fn register() -> CreateCommand {
     CreateCommand::new("count")
-        .description("Gives the Count of the already Recorded Messages after last Start")
+        .description("Show which and how many messages were recorded since the last start")
 }

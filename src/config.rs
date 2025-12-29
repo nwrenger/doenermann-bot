@@ -43,6 +43,7 @@ impl Config {
 pub struct Bot {
     pub token: String,
     pub date_format: String,
+    pub timestamp_format: String,
 }
 
 impl Bot {
@@ -50,6 +51,7 @@ impl Bot {
         Self {
             token: String::default(),
             date_format: String::from("%d.%m.%Y"),
+            timestamp_format: String::from("%Y-%m-%d %H:%M:%S UTC"),
         }
     }
 }

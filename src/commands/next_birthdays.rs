@@ -56,5 +56,5 @@ pub fn run(config: &Config) -> Result<ResponseContent> {
 }
 
 pub fn register() -> CreateCommand {
-    CreateCommand::new("next_birthdays").description("The next 10 Upcomming Birthdays")
+    CreateCommand::new("next_birthdays").description("Show the next 10 upcoming birthdays")
 }
