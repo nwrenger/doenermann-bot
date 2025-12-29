@@ -223,7 +223,7 @@ impl EventHandler for Handler {
                     commands::delete_birthday::register(),
                     commands::doener::register(),
                     commands::next_birthdays::register(),
-                    commands::set_birthday::register(&config),
+                    commands::set_birthday::register(config),
                 ],
             )
             .await
