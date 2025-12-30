@@ -8,6 +8,8 @@ pub mod doener;
 pub mod next_birthdays;
 pub mod set_birthday;
 
+pub const BIRTHDAY_FORMAT: &str = "%Y-%m-%d";
+
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct BirthdayRow {
     birthday: String,

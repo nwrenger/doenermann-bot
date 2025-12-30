@@ -1,6 +1,7 @@
 use chrono::{Datelike, Local, NaiveDate};
 use serenity::{all::CreateCommand, builder::CreateEmbed};
 
+use crate::commands::BIRTHDAY_FORMAT;
 use crate::{commands::load_birthdays, ResponseContent};
 use crate::{config::Config, error::Result};
 
@@ -9,7 +10,8 @@ pub fn run(config: &Config) -> Result<ResponseContent> {
     let now = Local::now().date_naive();
 
     rows.sort_by_key(|row| {
-        let birthday = NaiveDate::parse_from_str(&row.birthday, "%Y-%m-%d").unwrap_or_default();
+        let birthday =
+            NaiveDate::parse_from_str(&row.birthday, BIRTHDAY_FORMAT).unwrap_or_default();
         let next_birthday = if birthday.with_year(now.year()) < now.with_year(now.year()) {
             birthday.with_year(now.year() + 1).unwrap_or_default()
         } else {
@@ -23,7 +25,7 @@ pub fn run(config: &Config) -> Result<ResponseContent> {
     let length = if rows.len() < 10 { rows.len() } else { 10 };
 
     for i in rows.drain(..length) {
-        let date = NaiveDate::parse_from_str(&i.birthday, "%Y-%m-%d")?;
+        let date = NaiveDate::parse_from_str(&i.birthday, BIRTHDAY_FORMAT)?;
         let future = if date.with_year(now.year()) < now.with_year(now.year()) {
             date.with_year(now.year() + 1).unwrap_or_default()
         } else {

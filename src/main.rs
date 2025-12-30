@@ -7,7 +7,6 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::vec;
-use time::format_description;
 
 use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::async_trait;
@@ -89,12 +88,7 @@ impl EventHandler for Handler {
             let user_message = format!(
                 "{} [{}]\n{}\n\n",
                 msg.author.name,
-                msg.timestamp
-                    .format(
-                        &format_description::parse(&config.bot.timestamp_format)
-                            .expect("Invalid copy message time format")
-                    )
-                    .expect("Copy message time formatting failed"),
+                msg.timestamp.format(&config.bot.timestamp_format),
                 msg.content
             );
 
