@@ -22,7 +22,7 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 [bot]
 # The Bot Token
 token = ""
-# A date format used for displaying dates inside the bot messages, default is `%d.%m.%Y`
+# A date format used for dates inside the bot messages, default is `%d.%m.%Y`
 date_format = "%d.%m.%Y"
 # A timestamp format used for displaying timestamps inside the copied messages file, default is `%Y-%m-%d %H:%M:%S UTC`
 timestamp_format = "%Y-%m-%d %H:%M:%S UTC"
