@@ -4,8 +4,8 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 
 ## Features
 
-- Copy message of a channel to a file
-- Show with a command how many were copied: `/count`
+- Copy message of a citations channel to the database
+- Show with a command how many were copied: `/citations`
 - A normal ping command: `/döner`
 - Add your birthday: `/set_birthday`
 - Show the next upcoming birthdays: `/next_birthdays`
@@ -24,18 +24,18 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 token = ""
 # A date format used for displaying dates inside the bot messages, default is `%d.%m.%Y`
 date_format = "%d.%m.%Y"
-# A timestamp format used for displaying timestamps inside the copied messages file, default is `%Y-%m-%d %H:%M:%S UTC`
-timestamp_format = "%Y-%m-%d %H:%M:%S UTC"
+# A timestamp format used for displaying timestamps inside the bot messages, default is `%d.%m.%Y %H:%M:%S`
+timestamp_format = "%d.%m.%Y %H:%M:%S"
 
 [paths]
-# Path to the birthdays file
-birthdays = "birthdays.csv"
-# Path to the messages file
-messages = "citations.txt"
+# Path to the database file
+database = "db.json"
 
 [server]
-# Id of the copy channel
-copy_channel = ""
+# Id of the server
+guild = ""
+# Id of the citations channel
+citations_channel = ""
 # Id of the role which should be added on join
 role_on_join = ""
 # Id of the bot's admin, can be multiple

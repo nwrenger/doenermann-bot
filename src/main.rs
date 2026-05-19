@@ -1,10 +1,9 @@
 mod commands;
 mod config;
+mod db;
 mod error;
+mod util;
 
-use chrono::offset::Local;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::PathBuf;
 use std::vec;
 
@@ -16,35 +15,9 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::config::Config;
+use crate::db::SerenityDatabase;
 use crate::error::Error;
-
-struct ResponseContent {
-    text: String,
-    embed: CreateEmbed,
-}
-
-impl ResponseContent {
-    fn new(text: String, embed: CreateEmbed) -> Self {
-        Self { text, embed }
-    }
-
-    fn new_only_embed(embed: CreateEmbed) -> Self {
-        Self {
-            text: String::new(),
-            embed,
-        }
-    }
-}
-
-#[derive(Default)]
-struct Counter {
-    count: i32,
-    list: Vec<String>,
-}
-
-impl TypeMapKey for Counter {
-    type Value = Counter;
-}
+use crate::util::embeds_to_string;
 
 struct Handler;
 
@@ -56,9 +29,15 @@ impl EventHandler for Handler {
     // Add a role specified in the config on server join
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
         let data = ctx.data.read().await;
-        let config = data.get::<Config>().expect("Expected a Config");
+        let db = data
+            .get::<SerenityDatabase>()
+            .expect("Expected a Database")
+            .inner
+            .clone();
 
-        let role_id: u64 = config
+        let role_id: u64 = db
+            .read()
+            .config
             .server
             .role_on_join
             .parse()
@@ -67,75 +46,65 @@ impl EventHandler for Handler {
         new_member.add_role(&ctx.http, role_id).await.unwrap()
     }
 
-    // Copies text messages of a certain channel(specified in the config) in a file.
-    // It also adds and increments the Counter used in the count command.
+    // Copies text messages of a citation channel to the database.
     async fn message(&self, ctx: Context, msg: Message) {
-        let mut data = ctx.data.write().await;
-        let config = data.get::<Config>().expect("Expected a Config");
+        let data = ctx.data.read().await;
+        let db = data
+            .get::<SerenityDatabase>()
+            .expect("Expected a Database")
+            .inner
+            .clone();
 
-        let copied_channel: u64 = config
+        let citations_channel: u64 = db
+            .read()
+            .config
             .server
-            .copy_channel
+            .citations_channel
             .parse()
             .expect("Copied Channel must be a valid integer string");
 
-        let mut messages_file = OpenOptions::new()
-            .append(true)
-            .open(&config.paths.messages)
-            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.messages));
-
-        if msg.channel_id == ChannelId::new(copied_channel) {
-            let user_message = format!(
-                "{} [{}]\n{}\n\n",
-                msg.author.name,
-                msg.timestamp.format(&config.bot.timestamp_format),
-                msg.content
-            );
-
-            messages_file
-                .write_all(user_message.as_bytes())
-                .expect("Couldn't write to file");
-
-            // Update counter
-            if let Some(counter) = data.get_mut::<Counter>() {
-                counter.count += 1;
-                counter.list.push(user_message);
-            }
+        if msg.channel_id == ChannelId::new(citations_channel) {
+            db.write().citations.add(db::Message::new(
+                msg.id.into(),
+                db::User::new(msg.author.id.into(), msg.author.name.clone()),
+                format!(
+                    "{}{}",
+                    msg.content,
+                    embeds_to_string(&msg.embeds)
+                        .lines()
+                        .map(|line| format!("\n{line}"))
+                        .collect::<String>()
+                ),
+                msg.timestamp.to_utc(),
+            ));
         }
     }
 
     // Commands handler
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        let db = {
+            let data = ctx.data.read().await;
+            data.get::<SerenityDatabase>()
+                .expect("Expected a Database")
+                .inner
+                .clone()
+        };
+
         if let Interaction::Command(command) = interaction {
             let content = match command.data.name.as_str() {
-                "count" => {
-                    let data = ctx.data.read().await;
-                    commands::count::run(
-                        &command.data.options(),
-                        data.get::<Counter>().unwrap_or(&Counter::default()),
-                    )
-                }
-                "delete_birthday" => {
-                    let data = ctx.data.read().await;
-                    commands::delete_birthday::run(
-                        &command.data.options(),
-                        data.get::<Config>().unwrap_or(&Config::new()),
-                        command.user.id.into(),
-                    )
-                }
+                "citations" => commands::citations::run(&command.data.options(), db),
+                "delete_birthday" => commands::delete_birthday::run(
+                    &command.data.options(),
+                    db,
+                    command.user.id.into(),
+                ),
                 "döner" => commands::doener::run(&command.data.options()),
-                "next_birthdays" => {
-                    let data = ctx.data.read().await;
-                    commands::next_birthdays::run(data.get::<Config>().unwrap_or(&Config::new()))
-                }
-                "set_birthday" => {
-                    let data = ctx.data.read().await;
-                    commands::set_birthday::run(
-                        &command.data.options(),
-                        data.get::<Config>().unwrap_or(&Config::new()),
-                        command.user.id.into(),
-                    )
-                }
+                "next_birthdays" => commands::next_birthdays::run(db),
+                "set_birthday" => commands::set_birthday::run(
+                    &command.data.options(),
+                    db,
+                    db::User::new(command.user.id.into(), command.user.name.clone()),
+                ),
                 _ => Err(Error::CommandNotFound),
             };
             match content {
@@ -185,50 +154,39 @@ impl EventHandler for Handler {
 
     // Setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
+        let data = ctx.data.read().await;
+        let db = data
+            .get::<SerenityDatabase>()
+            .expect("Expected a Config")
+            .inner
+            .clone();
+        let date_format = db.read().config.bot.date_format.clone();
+        let parsed_guild: u64 = db
+            .read()
+            .config
+            .server
+            .guild
+            .parse()
+            .expect("Guild ID must be a valid integer string");
+
         println!(
-            "'{}' is connected with Guilds (id): {:?}",
-            ready.user.name,
-            ready
-                .guilds
-                .iter()
-                .map(|f| f.id.to_string())
-                .collect::<Vec<String>>()
+            "'{}' connecting with Guild (id): {:?}",
+            ready.user.name, &parsed_guild
         );
 
-        let copy_message = format!("[Info] Begin Copying on {}\n\n", Local::now().date_naive());
-        let data = ctx.data.read().await;
-        let config = data.get::<Config>().expect("Expected a Config");
-
-        let mut messages_file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&config.paths.messages)
-            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.messages));
-
-        messages_file
-            .write_all(copy_message.as_bytes())
-            .expect("Couldn't write to file");
-
-        let _birthday_file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&config.paths.birthdays)
-            .unwrap_or_else(|_| panic!("Couldn't open {}", &config.paths.birthdays));
-
-        for UnavailableGuild { id, .. } in ready.guilds {
-            id.set_commands(
+        GuildId::new(parsed_guild)
+            .set_commands(
                 &ctx.http,
                 vec![
-                    commands::count::register(),
+                    commands::citations::register(),
                     commands::delete_birthday::register(),
                     commands::doener::register(),
                     commands::next_birthdays::register(),
-                    commands::set_birthday::register(config),
+                    commands::set_birthday::register(date_format),
                 ],
             )
             .await
             .unwrap();
-        }
     }
 }
 
@@ -238,6 +196,9 @@ async fn main() {
 
     let config_path = PathBuf::from(CONFIG_PATH);
     let config = Config::read_or_create(config_path).expect("Expected a valid config!");
+    let db = SerenityDatabase::open(&config.paths.database);
+    // Save config in db
+    db.inner.write().config = config.clone();
 
     let intents = GatewayIntents::all();
 
@@ -247,11 +208,10 @@ async fn main() {
         .await
         .expect("Error creating client");
 
-    // Setting counter && config
+    // Setting up database
     {
         let mut data = client.data.write().await;
-        data.insert::<Counter>(Counter::default());
-        data.insert::<Config>(config);
+        data.insert::<SerenityDatabase>(db);
     }
 
     // Finally, start a single shard, and start listening to events

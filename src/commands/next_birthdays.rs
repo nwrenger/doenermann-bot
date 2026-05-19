@@ -1,31 +1,40 @@
-use chrono::{Datelike, Local, NaiveDate};
+use std::sync::Arc;
+
+use chrono::{Datelike, Local};
+use light_magic::atomic::AtomicDatabase;
 use serenity::{all::CreateCommand, builder::CreateEmbed};
 
-use crate::commands::BIRTHDAY_FORMAT;
-use crate::{commands::load_birthdays, ResponseContent};
-use crate::{config::Config, error::Result};
+use crate::db::Database;
+use crate::error::Result;
+use crate::util::ResponseContent;
 
-pub fn run(config: &Config) -> Result<ResponseContent> {
-    let mut rows = load_birthdays(&config.paths.birthdays)?;
+const MAX_BIRTHDAY_FIELDS: usize = 10;
+const FUTURE_FORMAT: &str = "%d %B %Y";
+
+pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<ResponseContent> {
+    let mut birthdays = db.read().birthdays.values().cloned().collect::<Vec<_>>();
     let now = Local::now().date_naive();
 
-    rows.sort_by_key(|row| {
-        let birthday =
-            NaiveDate::parse_from_str(&row.birthday, BIRTHDAY_FORMAT).unwrap_or_default();
-        let next_birthday = if birthday.with_year(now.year()) < now.with_year(now.year()) {
-            birthday.with_year(now.year() + 1).unwrap_or_default()
+    birthdays.sort_by_key(|birthday| {
+        let date = birthday.date;
+        let next_date = if date.with_year(now.year()) < now.with_year(now.year()) {
+            date.with_year(now.year() + 1).unwrap_or_default()
         } else {
-            birthday.with_year(now.year()).unwrap_or_default()
+            date.with_year(now.year()).unwrap_or_default()
         };
-        next_birthday.signed_duration_since(now).num_days().abs()
+        next_date.signed_duration_since(now).num_days().abs()
     });
 
     let mut embed = CreateEmbed::default().title("Next Birthdays:");
 
-    let length = if rows.len() < 10 { rows.len() } else { 10 };
+    let length = if birthdays.len() < MAX_BIRTHDAY_FIELDS {
+        birthdays.len()
+    } else {
+        MAX_BIRTHDAY_FIELDS
+    };
 
-    for i in rows.drain(..length) {
-        let date = NaiveDate::parse_from_str(&i.birthday, BIRTHDAY_FORMAT)?;
+    for birthday in birthdays.drain(..length) {
+        let date = birthday.date;
         let future = if date.with_year(now.year()) < now.with_year(now.year()) {
             date.with_year(now.year() + 1).unwrap_or_default()
         } else {
@@ -44,8 +53,8 @@ pub fn run(config: &Config) -> Result<ResponseContent> {
                 + 1
         };
         embed = embed.field(
-            future.format("%d %B %Y").to_string(),
-            format!("<@{}> ({})", i.user, age),
+            future.format(FUTURE_FORMAT).to_string(),
+            format!("<@{}> ({})", birthday.user.id, age),
             false,
         );
     }

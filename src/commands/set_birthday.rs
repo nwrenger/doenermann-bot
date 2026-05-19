@@ -1,21 +1,30 @@
+use std::sync::Arc;
+
 use chrono::{Local, NaiveDate};
+use light_magic::atomic::AtomicDatabase;
 use serenity::all::{
     CommandOptionType, CreateCommand, CreateCommandOption, CreateEmbed, ResolvedOption,
     ResolvedValue,
 };
 
 use crate::{
-    commands::{load_birthdays, save_birthdays, BirthdayRow},
-    config::Config,
+    db::{Birthday, Database, User},
     error::{Error, Result},
-    ResponseContent,
+    util::ResponseContent,
 };
 
-pub fn run(options: &[ResolvedOption], config: &Config, user: u64) -> Result<ResponseContent> {
+pub fn run(
+    options: &[ResolvedOption],
+    db: Arc<AtomicDatabase<Database>>,
+    user: User,
+) -> Result<ResponseContent> {
     let year_option = &options[0];
 
     if let ResolvedValue::String(value) = year_option.value {
-        let parsed_date = NaiveDate::parse_from_str(value, &config.bot.date_format)?;
+        let parsed_date = {
+            let db = db.read();
+            NaiveDate::parse_from_str(value, &db.config.bot.date_format)?
+        };
         let date = if Local::now().date_naive().years_since(parsed_date).is_some() {
             parsed_date
         } else {
@@ -24,23 +33,7 @@ pub fn run(options: &[ResolvedOption], config: &Config, user: u64) -> Result<Res
             )));
         };
 
-        let mut rows = load_birthdays(&config.paths.birthdays)?;
-        let mut found = false;
-        for row in rows.iter_mut() {
-            if row.user == user {
-                row.birthday = date.to_string();
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            rows.push(BirthdayRow {
-                birthday: date.to_string(),
-                user,
-            });
-        }
-
-        save_birthdays(&config.paths.birthdays, &rows)?;
+        db.write().birthdays.add(Birthday::new(user, date));
 
         Ok(ResponseContent::new_only_embed(
             CreateEmbed::default().title(format!("Your Birthday was set to: {value}")),
@@ -50,14 +43,14 @@ pub fn run(options: &[ResolvedOption], config: &Config, user: u64) -> Result<Res
     }
 }
 
-pub fn register(config: &Config) -> CreateCommand {
+pub fn register(date_format: String) -> CreateCommand {
     CreateCommand::new("set_birthday")
         .description("Set your birthday date")
         .add_option(
             CreateCommandOption::new(
                 CommandOptionType::String,
                 "birth",
-                format!("Date format: {}", &config.bot.date_format),
+                format!("Date format: {}", date_format),
             )
             .required(true),
         )

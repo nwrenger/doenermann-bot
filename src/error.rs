@@ -1,6 +1,6 @@
 use serenity::all::{Colour, CreateEmbed};
 
-use crate::ResponseContent;
+use crate::util::ResponseContent;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -14,12 +14,6 @@ pub enum Error {
     FileSystem(String),
     /// Toml Serialization
     Toml(String),
-    /// Couldn't read the csv
-    ReadCSV,
-    /// Couldn't write to the csv
-    WriteCSV,
-    /// Other csv related error
-    OtherCSV(String),
     /// Unathorized action
     Unauthorized,
     /// Command not found
@@ -39,13 +33,6 @@ impl Error {
             Error::Toml(e) => {
                 CreateEmbed::default().title(format!("Toml Serialization Error: {e}!"))
             }
-            Error::ReadCSV => {
-                CreateEmbed::default().title(String::from("Couldn't read the CSV file!"))
-            }
-            Error::WriteCSV => {
-                CreateEmbed::default().title(String::from("Couldn't write to the CSV file!"))
-            }
-            Error::OtherCSV(e) => CreateEmbed::default().title(format!("Unknown CSV Error: {e}!")),
             Error::Unauthorized => CreateEmbed::default()
                 .title(String::from("You are unauthorized to do that action!")),
             Error::CommandNotFound => {

@@ -2,7 +2,7 @@ use serenity::all::{CreateCommand, ResolvedOption};
 use serenity::builder::CreateEmbed;
 
 use crate::error::Result;
-use crate::ResponseContent;
+use crate::util::ResponseContent;
 
 pub fn run(_options: &[ResolvedOption]) -> Result<ResponseContent> {
     Ok(ResponseContent::new(

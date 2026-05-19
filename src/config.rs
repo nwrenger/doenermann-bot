@@ -1,19 +1,14 @@
 use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
-use serenity::prelude::TypeMapKey;
 
 use crate::error::Result;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub bot: Bot,
     pub paths: Paths,
     pub server: Server,
-}
-
-impl TypeMapKey for Config {
-    type Value = Config;
 }
 
 impl Config {
@@ -39,7 +34,7 @@ impl Config {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Bot {
     pub token: String,
     pub date_format: String,
@@ -51,22 +46,20 @@ impl Bot {
         Self {
             token: String::default(),
             date_format: String::from("%d.%m.%Y"),
-            timestamp_format: String::from("%Y-%m-%d %H:%M:%S UTC"),
+            timestamp_format: String::from("%d.%m.%Y %H:%M:%S"),
         }
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Paths {
-    pub birthdays: String,
-    pub messages: String,
+    pub database: String,
 }
 
 impl Default for Paths {
     fn default() -> Self {
         Self {
-            birthdays: String::from("birthdays.csv"),
-            messages: String::from("messages.txt"),
+            database: String::from("db.json"),
         }
     }
 }
@@ -77,9 +70,10 @@ impl Paths {
     }
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Server {
-    pub copy_channel: String,
+    pub guild: String,
+    pub citations_channel: String,
     pub role_on_join: String,
     pub admins: Vec<String>,
 }
