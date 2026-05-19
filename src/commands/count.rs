@@ -15,14 +15,14 @@ pub fn run(_options: &[ResolvedOption], counter: &Counter) -> Result<ResponseCon
             counter.count
         )
     };
+
     let mut embed = CreateEmbed::default().title(title);
-    for (i, item) in counter.list.iter().enumerate() {
-        // We have to get the first 24 items
-        if i < 24 {
-            embed = embed.field("", item, false);
-        } else {
-            embed = embed.field("", "...", false);
-        }
+    counter.list.iter().take(24).for_each(|item| {
+        embed = embed.clone().field("", item.to_owned(), false);
+    });
+
+    if counter.list.len() > 24 {
+        embed = embed.field("", "...", false);
     }
 
     Ok(ResponseContent::new_only_embed(embed))
