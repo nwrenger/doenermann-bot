@@ -21,7 +21,7 @@ impl light_magic::atomic::DataStore for Database {}
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Birthday {
-    pub user: User,
+    pub user_id: u64,
     pub date: NaiveDate,
 }
 
@@ -29,20 +29,20 @@ impl PrimaryKey for Birthday {
     type PrimaryKeyType = u64;
 
     fn primary_key(&self) -> &Self::PrimaryKeyType {
-        &self.user.id
+        &self.user_id
     }
 }
 
 impl Birthday {
-    pub fn new(user: User, date: NaiveDate) -> Self {
-        Self { user, date }
+    pub fn new(user_id: u64, date: NaiveDate) -> Self {
+        Self { user_id, date }
     }
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Message {
     pub id: u64,
-    pub user: User,
+    pub user_id: u64,
     pub content: String,
     pub utc_timestamp: DateTime<Utc>,
 }
@@ -56,25 +56,13 @@ impl PrimaryKey for Message {
 }
 
 impl Message {
-    pub fn new(id: u64, user: User, content: String, utc_timestamp: DateTime<Utc>) -> Self {
+    pub fn new(id: u64, user_id: u64, content: String, utc_timestamp: DateTime<Utc>) -> Self {
         Self {
             id,
-            user,
+            user_id,
             content,
             utc_timestamp,
         }
-    }
-}
-
-#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct User {
-    pub id: u64,
-    pub name: String,
-}
-
-impl User {
-    pub fn new(id: u64, name: String) -> Self {
-        Self { id, name }
     }
 }
 

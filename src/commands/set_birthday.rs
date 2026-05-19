@@ -8,7 +8,7 @@ use serenity::all::{
 };
 
 use crate::{
-    db::{Birthday, Database, User},
+    db::{Birthday, Database},
     error::{Error, Result},
     util::ResponseContent,
 };
@@ -16,7 +16,7 @@ use crate::{
 pub fn run(
     options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
-    user: User,
+    user_id: u64,
 ) -> Result<ResponseContent> {
     let year_option = &options[0];
 
@@ -33,7 +33,7 @@ pub fn run(
             )));
         };
 
-        db.write().birthdays.add(Birthday::new(user, date));
+        db.write().birthdays.add(Birthday::new(user_id, date));
 
         Ok(ResponseContent::new_only_embed(
             CreateEmbed::default().title(format!("Your Birthday was set to: {value}")),

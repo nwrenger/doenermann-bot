@@ -52,7 +52,7 @@ pub fn run(
         let field_name = truncate_text(
             format!(
                 "<@{}> [{}]",
-                message.user.id,
+                message.user_id,
                 message
                     .utc_timestamp
                     .with_timezone(&Local)

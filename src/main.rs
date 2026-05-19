@@ -66,7 +66,7 @@ impl EventHandler for Handler {
         if msg.channel_id == ChannelId::new(citations_channel) {
             db.write().citations.add(db::Message::new(
                 msg.id.into(),
-                db::User::new(msg.author.id.into(), msg.author.name.clone()),
+                msg.author.id.into(),
                 format!(
                     "{}{}",
                     msg.content,
@@ -100,11 +100,9 @@ impl EventHandler for Handler {
                 ),
                 "döner" => commands::doener::run(&command.data.options()),
                 "next_birthdays" => commands::next_birthdays::run(db),
-                "set_birthday" => commands::set_birthday::run(
-                    &command.data.options(),
-                    db,
-                    db::User::new(command.user.id.into(), command.user.name.clone()),
-                ),
+                "set_birthday" => {
+                    commands::set_birthday::run(&command.data.options(), db, command.user.id.into())
+                }
                 _ => Err(Error::CommandNotFound),
             };
             match content {

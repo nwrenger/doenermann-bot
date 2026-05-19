@@ -54,7 +54,7 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<ResponseContent> {
         };
         embed = embed.field(
             future.format(FUTURE_FORMAT).to_string(),
-            format!("<@{}> ({})", birthday.user.id, age),
+            format!("<@{}> ({})", birthday.user_id, age),
             false,
         );
     }
