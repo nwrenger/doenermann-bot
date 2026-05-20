@@ -37,7 +37,10 @@ struct JikanErrorResponse {
     error_type: Option<String>,
 }
 
-async fn process_character(response: reqwest::Response) -> Result<Character> {
+pub async fn get_random_character() -> Result<Character> {
+    let url = format!("{API_BASE}/random/characters");
+    let response = reqwest::get(url).await?;
+
     if !response.status().is_success() {
         let status = response.status();
         let error = response.json::<JikanErrorResponse>().await.ok();
@@ -56,18 +59,4 @@ async fn process_character(response: reqwest::Response) -> Result<Character> {
 
     let json = response.json::<RadomCharacterResponse>().await?;
     Ok(Character::from(json))
-}
-
-pub async fn get_random_character() -> Result<Character> {
-    let url = format!("{API_BASE}/random/characters");
-    let response = reqwest::get(url).await?;
-
-    process_character(response).await
-}
-
-pub async fn get_character(id: u32) -> Result<Character> {
-    let url = format!("{API_BASE}/characters/{id}");
-    let response = reqwest::get(url).await?;
-
-    process_character(response).await
 }

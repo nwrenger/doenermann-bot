@@ -15,7 +15,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::config::Config;
-use crate::db::Database;
+use crate::db::{Character, Database};
 use crate::error::Error;
 use crate::util::{embeds_to_string, from_delete_payload};
 
@@ -132,14 +132,13 @@ impl EventHandler for Handler {
                 let (id, payload) = custom_id.split_once(':').unwrap_or_default();
 
                 let content = match id {
-                    "claim" if let Ok(mal_id) = payload.parse::<u32>() => {
+                    "claim" if let Some(character) = Character::from_payload(payload) => {
                         commands::waifu::roll::claim(
                             db,
                             component.user.id.into(),
                             &component.user.name,
-                            mal_id,
+                            character,
                         )
-                        .await
                     }
                     "previous" | "next" if let Some(mal_id) = payload.parse::<u32>().ok() => {
                         commands::waifu::collection::run(db, component.user.id.into(), Some(mal_id))

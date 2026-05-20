@@ -120,3 +120,18 @@ impl From<RadomCharacterResponse> for Character {
         }
     }
 }
+
+impl Character {
+    pub fn from_payload(payload: &str) -> Option<Self> {
+        let (mal_id, payload) = payload.split_once(',')?;
+        let (payload, image) = payload.rsplit_once(',')?;
+        let (name, goon_credits) = payload.rsplit_once(',')?;
+
+        Some(Self {
+            mal_id: mal_id.parse().ok()?,
+            name: name.to_string(),
+            goon_credits: goon_credits.parse().ok()?,
+            image: Url::parse(image).ok()?,
+        })
+    }
+}

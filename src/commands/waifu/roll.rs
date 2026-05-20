@@ -5,8 +5,8 @@ use serenity::all::{
     ButtonStyle, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponseMessage,
 };
 
-use crate::api::{get_character, get_random_character};
-use crate::db::{Collection, Database};
+use crate::api::get_random_character;
+use crate::db::{Character, Collection, Database};
 use crate::error::Result;
 use crate::util::color_goon_credits;
 
@@ -23,8 +23,8 @@ pub async fn run() -> Result<CreateInteractionResponseMessage> {
     }
 
     let claim = CreateActionRow::Buttons(vec![CreateButton::new(format!(
-        "claim:{}",
-        character.mal_id
+        "claim:{},{},{},{}",
+        character.mal_id, &character.name, character.goon_credits, character.image
     ))
     .label("Claim")
     .style(ButtonStyle::Secondary)]);
@@ -34,14 +34,12 @@ pub async fn run() -> Result<CreateInteractionResponseMessage> {
         .components(vec![claim]))
 }
 
-pub async fn claim(
+pub fn claim(
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
     user_name: &str,
-    mal_id: u32,
+    character: Character,
 ) -> Result<CreateInteractionResponseMessage> {
-    let character = get_character(mal_id).await?;
-
     let mut db = db.write();
     let user_collection = db.collections.get_mut(&user_id);
 
