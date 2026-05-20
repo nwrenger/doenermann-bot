@@ -6,13 +6,13 @@ use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
 use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, ResolvedOption, ResolvedValue,
+    CommandOptionType, CreateCommand, CreateCommandOption, CreateInteractionResponseMessage,
+    ResolvedOption, ResolvedValue,
 };
 
 use crate::{
     db::Database,
     error::{Error, Result},
-    util::ResponseContent,
 };
 
 pub fn run(
@@ -21,7 +21,7 @@ pub fn run(
     user_id: u64,
     date_format: &str,
     admins: &[String],
-) -> Result<ResponseContent> {
+) -> Result<CreateInteractionResponseMessage> {
     let subcommand = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::SubCommand(options) = &subcommand.value {
@@ -29,7 +29,7 @@ pub fn run(
             "set" => set::run(options, db, user_id, date_format),
             "delete" => delete::run(options, db, user_id, admins),
             "next" => next::run(db),
-            _ => Err(Error::CommandNotFound),
+            _ => Err(Error::NotFound),
         }
     } else {
         Err(Error::OptionResolve)

@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use serenity::all::prelude::TypeMapKey;
 use url::Url;
 
+use crate::api::RadomCharacterResponse;
+
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Database {
     pub birthdays: Table<Birthday>,
@@ -72,7 +74,7 @@ impl Message {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Collection {
     pub user_id: u64,
-    pub waifus: Table<Waifu>,
+    pub characters: Table<Character>,
 }
 
 impl PrimaryKey for Collection {
@@ -83,17 +85,38 @@ impl PrimaryKey for Collection {
     }
 }
 
+impl Collection {
+    pub fn new(user_id: u64) -> Self {
+        Self {
+            user_id,
+            characters: Table::default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Waifu {
-    pub mal_id: u64,
+pub struct Character {
+    pub mal_id: u32,
     pub name: String,
+    pub goon_credits: u32,
     pub image: Url,
 }
 
-impl PrimaryKey for Waifu {
-    type PrimaryKeyType = u64;
+impl PrimaryKey for Character {
+    type PrimaryKeyType = u32;
 
     fn primary_key(&self) -> &Self::PrimaryKeyType {
         &self.mal_id
+    }
+}
+
+impl From<RadomCharacterResponse> for Character {
+    fn from(r: RadomCharacterResponse) -> Self {
+        Self {
+            mal_id: r.data.mal_id,
+            name: r.data.name,
+            goon_credits: r.data.favorites,
+            image: r.data.images.webp.image_url,
+        }
     }
 }

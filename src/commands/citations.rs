@@ -3,25 +3,24 @@ use std::sync::Arc;
 use chrono::Local;
 use light_magic::atomic::AtomicDatabase;
 use serenity::{
-    all::{CreateCommand, ResolvedOption},
+    all::{CreateCommand, CreateInteractionResponseMessage, ResolvedOption},
     builder::CreateEmbed,
 };
 
 use crate::error::Result;
-use crate::{db::Database, util::ResponseContent};
+use crate::{db::Database, util::EMPTY_FIELD_VALUE};
 
 const MAX_CITATION_FIELDS: usize = 25;
 const MAX_EMBED_CHARS: usize = 6000;
 const MAX_FIELD_NAME_CHARS: usize = 256;
 const MAX_FIELD_VALUE_CHARS: usize = 1024;
 const TRUNCATION_SUFFIX: &str = "...";
-const EMPTY_FIELD_VALUE: &str = "\u{200B}";
 
 pub fn run(
     _options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
     timestamp_format: &str,
-) -> Result<ResponseContent> {
+) -> Result<CreateInteractionResponseMessage> {
     let citations = {
         let db = db.read();
         db.citations
@@ -75,7 +74,7 @@ pub fn run(
         embed = embed.field(field_name, field_value, false);
     }
 
-    Ok(ResponseContent::new_only_embed(embed))
+    Ok(CreateInteractionResponseMessage::new().embed(embed))
 }
 
 fn embed_title_len(title: &str) -> usize {

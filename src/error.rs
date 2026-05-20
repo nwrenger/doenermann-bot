@@ -1,6 +1,4 @@
-use serenity::all::{Colour, CreateEmbed};
-
-use crate::util::ResponseContent;
+use serenity::all::{Colour, CreateEmbed, CreateInteractionResponseMessage};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -14,14 +12,20 @@ pub enum Error {
     FileSystem(String),
     /// Toml Serialization
     Toml(String),
+    /// Reqwest Error
+    Reqwest(String),
+    /// Jikan API rate limit
+    RateLimit,
+    /// Jikan API error
+    Jikan(String),
     /// Unathorized action
     Unauthorized,
-    /// Command not found
-    CommandNotFound,
+    /// Command/Interaction not found
+    NotFound,
 }
 
 impl Error {
-    pub fn error_message(self) -> ResponseContent {
+    pub fn error_message(self) -> CreateInteractionResponseMessage {
         let embed = match self {
             Error::OptionResolve => {
                 CreateEmbed::default().title(String::from("Got invalid option!"))
@@ -33,15 +37,22 @@ impl Error {
             Error::Toml(e) => {
                 CreateEmbed::default().title(format!("Toml Serialization Error: {e}!"))
             }
+            Error::Reqwest(e) => CreateEmbed::default().title(format!("Reqwest Error: {e}!")),
+            Error::RateLimit => CreateEmbed::default().title(String::from(
+                "API rate limit reached. Calm down and continue in a few seconds!",
+            )),
+            Error::Jikan(e) => CreateEmbed::default().title(format!("Jikan API Error: {e}!")),
             Error::Unauthorized => CreateEmbed::default()
                 .title(String::from("You are unauthorized to do that action!")),
-            Error::CommandNotFound => {
-                CreateEmbed::default().title(String::from("Command not Found!"))
+            Error::NotFound => {
+                CreateEmbed::default().title(String::from("Command/Interaction not found!"))
             }
         }
         .color(Colour::RED);
 
-        ResponseContent::new_only_embed(embed)
+        CreateInteractionResponseMessage::new()
+            .add_embed(embed)
+            .ephemeral(true)
     }
 }
 
@@ -60,6 +71,12 @@ impl From<toml::ser::Error> for Error {
 impl From<toml::de::Error> for Error {
     fn from(err: toml::de::Error) -> Self {
         Error::Toml(err.to_string())
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error::Reqwest(err.to_string())
     }
 }
 

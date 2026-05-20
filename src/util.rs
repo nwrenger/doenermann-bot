@@ -1,22 +1,6 @@
-use serenity::all::{CreateEmbed, Embed};
+use serenity::all::Embed;
 
-pub struct ResponseContent {
-    pub text: String,
-    pub embed: CreateEmbed,
-}
-
-impl ResponseContent {
-    pub fn new(text: String, embed: CreateEmbed) -> Self {
-        Self { text, embed }
-    }
-
-    pub fn new_only_embed(embed: CreateEmbed) -> Self {
-        Self {
-            text: String::new(),
-            embed,
-        }
-    }
-}
+pub const EMPTY_FIELD_VALUE: &str = "\u{200B}";
 
 pub fn embeds_to_string(embeds: &[Embed]) -> String {
     embeds
@@ -70,4 +54,30 @@ fn push_non_empty(parts: &mut Vec<String>, value: &str) {
     if !value.is_empty() {
         parts.push(value.to_string());
     }
+}
+
+pub fn color_goon_credits(goon_credits: u32) -> Option<u32> {
+    match goon_credits {
+        0..=199 => None,
+        200..=499 => Some(0x8E8E93),       // Common
+        500..=999 => Some(0x2ECC71),       // Uncommon
+        1_000..=2_499 => Some(0x3498DB),   // Rare
+        2_500..=4_999 => Some(0x9B59B6),   // Epic
+        5_000..=9_999 => Some(0xF1C40F),   // Legendary
+        10_000..=19_999 => Some(0xE67E22), // Mythic
+        _ => Some(0xE91E63),               // Icon
+    }
+}
+
+pub fn from_delete_payload(payload: &str) -> Option<(u64, u32)> {
+    let parts: Vec<&str> = payload.split(',').collect();
+
+    if parts.len() != 2 {
+        return None;
+    }
+
+    let owner_id = parts[0].parse::<u64>().ok()?;
+    let mal_id = parts[1].parse::<u32>().ok()?;
+
+    Some((owner_id, mal_id))
 }

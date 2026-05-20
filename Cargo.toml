@@ -18,5 +18,5 @@ chrono = "0.4"
 serde = "1.0"
 toml = "1.1.2"
 light-magic = "0.8.4"
-reqwest = "0.13.3"
+reqwest = { version = "0.13.3", features = ["json"] }
 url = { version = "2.5.8", features = ["serde"] }

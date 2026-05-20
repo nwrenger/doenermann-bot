@@ -1,3 +1,4 @@
+mod api;
 mod commands;
 mod config;
 mod db;
@@ -8,17 +9,15 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use light_magic::atomic::DataStore;
-use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::all::CreateInteractionResponse;
 use serenity::async_trait;
-use serenity::builder::CreateEmbed;
-use serenity::model::gateway::Ready;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::config::Config;
 use crate::db::Database;
 use crate::error::Error;
-use crate::util::embeds_to_string;
+use crate::util::{embeds_to_string, from_delete_payload};
 
 struct Handler;
 
@@ -84,68 +83,104 @@ impl EventHandler for Handler {
             )
         };
 
-        if let Interaction::Command(command) = interaction {
-            let content = match command.data.name.as_str() {
-                "citations" => commands::citations::run(
-                    &command.data.options(),
-                    db,
-                    &config.bot.timestamp_format,
-                ),
-                "birthday" => commands::birthday::run(
-                    &command.data.options(),
-                    db,
-                    command.user.id.into(),
-                    &config.bot.date_format,
-                    &config.server.admins,
-                ),
-                "döner" => commands::doener::run(&command.data.options()),
-                "waifu" => {
-                    commands::waifu::run(&command.data.options(), db, command.user.id.into())
-                }
-                _ => Err(Error::CommandNotFound),
-            };
-            match content {
-                Ok(content) => {
-                    if let Err(why) = command
-                        .create_response(
-                            &ctx.http,
-                            CreateInteractionResponse::Message(
-                                CreateInteractionResponseMessage::new()
-                                    .content(content.text)
-                                    .add_embed(content.embed),
-                            ),
-                        )
-                        .await
-                    {
-                        command
+        match interaction {
+            Interaction::Command(command) => {
+                let content = match command.data.name.as_str() {
+                    "citations" => commands::citations::run(
+                        &command.data.options(),
+                        db,
+                        &config.bot.timestamp_format,
+                    ),
+                    "birthday" => commands::birthday::run(
+                        &command.data.options(),
+                        db,
+                        command.user.id.into(),
+                        &config.bot.date_format,
+                        &config.server.admins,
+                    ),
+                    "döner" => commands::doener::run(&command.data.options()),
+                    "waifu" => {
+                        commands::waifu::run(&command.data.options(), db, command.user.id.into())
+                            .await
+                    }
+                    _ => Err(Error::NotFound),
+                };
+                match content {
+                    Ok(content) => {
+                        if let Err(err) = command
+                            .create_response(&ctx.http, CreateInteractionResponse::Message(content))
+                            .await
+                        {
+                            eprintln!("Failed to create command response: {err}");
+                        }
+                    }
+                    Err(e) => {
+                        if let Err(err) = command
                             .create_response(
                                 &ctx.http,
-                                CreateInteractionResponse::Message(
-                                    CreateInteractionResponseMessage::new().add_embed(
-                                        CreateEmbed::default()
-                                            .color(Colour::RED)
-                                            .title(format!("An unknwon Error occurred: {why}!")),
-                                    ),
-                                ),
+                                CreateInteractionResponse::Message(e.error_message()),
                             )
                             .await
-                            .unwrap_or_default();
-                    };
-                }
-                Err(e) => {
-                    let error_message = e.error_message();
-                    command
-                        .create_response(
-                            &ctx.http,
-                            CreateInteractionResponse::Message(
-                                CreateInteractionResponseMessage::new()
-                                    .add_embed(error_message.embed),
-                            ),
-                        )
-                        .await
-                        .unwrap_or_default();
+                        {
+                            eprintln!("Failed to create command error response: {err}");
+                        }
+                    }
                 }
             }
+            Interaction::Component(component) => {
+                let custom_id = &component.data.custom_id;
+                let (id, payload) = custom_id.split_once(':').unwrap_or_default();
+
+                let content = match id {
+                    "claim" if let Ok(mal_id) = payload.parse::<u32>() => {
+                        commands::waifu::roll::claim(
+                            db,
+                            component.user.id.into(),
+                            &component.user.name,
+                            mal_id,
+                        )
+                        .await
+                    }
+                    "previous" | "next" if let Some(mal_id) = payload.parse::<u32>().ok() => {
+                        commands::waifu::collection::run(db, component.user.id.into(), Some(mal_id))
+                    }
+                    "delete" if let Some((user_id, mal_id)) = from_delete_payload(payload) => {
+                        commands::waifu::collection::delete(
+                            db,
+                            component.user.id.into(),
+                            user_id,
+                            mal_id,
+                        )
+                    }
+                    _ => Err(Error::NotFound),
+                };
+
+                match content {
+                    Ok(content) => {
+                        if let Err(err) = component
+                            .create_response(
+                                &ctx.http,
+                                CreateInteractionResponse::UpdateMessage(content),
+                            )
+                            .await
+                        {
+                            eprintln!("Failed to create component update response: {err}");
+                        }
+                    }
+                    Err(err) => {
+                        if let Err(response_err) = component
+                            .create_response(
+                                &ctx.http,
+                                CreateInteractionResponse::Message(err.error_message()),
+                            )
+                            .await
+                        {
+                            eprintln!("Failed to create component error response: {response_err}");
+                        }
+                    }
+                }
+            }
+            _ => return,
         }
     }
 

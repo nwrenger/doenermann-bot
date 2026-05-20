@@ -1,19 +1,18 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{ResolvedOption, ResolvedValue};
+use serenity::all::{CreateInteractionResponseMessage, ResolvedOption, ResolvedValue};
 use serenity::builder::CreateEmbed;
 
 use crate::db::Database;
 use crate::error::{Error, Result};
-use crate::util::ResponseContent;
 
 pub fn run(
     options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
     admins: &[String],
-) -> Result<ResponseContent> {
+) -> Result<CreateInteractionResponseMessage> {
     let user_option = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::User(user, _) = user_option.value {
@@ -32,19 +31,20 @@ pub fn run(
         let out = db.write().birthdays.delete(&selected_id);
 
         if out.is_some() {
-            Ok(ResponseContent::new_only_embed(
-                CreateEmbed::default().title(format!(
-                    "The birthday of {} was successfully deleted!",
-                    user.name
+            Ok(
+                CreateInteractionResponseMessage::new().embed(CreateEmbed::default().title(
+                    format!("The birthday of {} was successfully deleted!", user.name),
                 )),
-            ))
+            )
         } else {
-            Ok(ResponseContent::new_only_embed(
-                CreateEmbed::default().title(format!(
-                    "The selected user {} is not inside the birthdays list!",
-                    user.name
+            Ok(
+                CreateInteractionResponseMessage::new().embed(CreateEmbed::default().title(
+                    format!(
+                        "The selected user {} is not inside the birthdays list!",
+                        user.name
+                    ),
                 )),
-            ))
+            )
         }
     } else {
         Err(Error::OptionResolve)

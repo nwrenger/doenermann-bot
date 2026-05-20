@@ -1,12 +1,64 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::CreateEmbed;
+use serenity::all::{
+    ButtonStyle, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponseMessage,
+};
 
-use crate::db::Database;
+use crate::api::{get_character, get_random_character};
+use crate::db::{Collection, Database};
 use crate::error::Result;
-use crate::util::ResponseContent;
+use crate::util::color_goon_credits;
 
-pub fn run(_db: Arc<AtomicDatabase<Database>>) -> Result<ResponseContent> {
-    Ok(ResponseContent::new_only_embed(CreateEmbed::new()))
+pub async fn run() -> Result<CreateInteractionResponseMessage> {
+    let character = get_random_character().await?;
+
+    let mut embed = CreateEmbed::default()
+        .title(&character.name)
+        .field("Goon Credits", character.goon_credits.to_string(), true)
+        .image(character.image.to_string());
+
+    if let Some(color) = color_goon_credits(character.goon_credits) {
+        embed = embed.color(color);
+    }
+
+    let claim = CreateActionRow::Buttons(vec![CreateButton::new(format!(
+        "claim:{}",
+        character.mal_id
+    ))
+    .label("Claim")
+    .style(ButtonStyle::Secondary)]);
+
+    Ok(CreateInteractionResponseMessage::new()
+        .embed(embed)
+        .components(vec![claim]))
+}
+
+pub async fn claim(
+    db: Arc<AtomicDatabase<Database>>,
+    user_id: u64,
+    user_name: &str,
+    mal_id: u32,
+) -> Result<CreateInteractionResponseMessage> {
+    let character = get_character(mal_id).await?;
+
+    let mut db = db.write();
+    let user_collection = db.collections.get_mut(&user_id);
+
+    if let Some(collection) = user_collection {
+        collection.characters.add(character);
+    } else {
+        let mut collection = Collection::new(user_id);
+        collection.characters.add(character);
+        db.collections.add(collection);
+    }
+
+    Ok(
+        CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
+            CreateButton::new("claimed")
+                .label(format!("Claimed by {}!", user_name))
+                .style(ButtonStyle::Secondary)
+                .disabled(true),
+        ])]),
+    )
 }
