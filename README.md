@@ -7,10 +7,20 @@ A Repository with the Dönermann Bot used in a private Discord server of mine. I
 - Copy message of a citations channel to the database
 - Show with a command how many were copied: `/citations`
 - A normal ping command: `/döner`
-- Add your birthday: `/set_birthday`
-- Show the next upcoming birthdays: `/next_birthdays`
-- Delete a birthday of an user: `/delete_birthday`
+- Manage birthdays with `/birthday set`, `/birthday delete`, and `/birthday next`
+- Roll, claim, browse, delete, and rank waifus with `/waifu roll`, `/waifu collection`, and `/waifu leaderboard`
 - Give an user a role when the user joins the server
+
+## Commands
+
+- `/citations`: Shows the latest recorded citation messages from the configured citations channel.
+- `/döner`: Sends a Döner helper link.
+- `/birthday set birth:<date>`: Saves your birthday using the configured `date_format`.
+- `/birthday delete user:<user>`: Deletes your own birthday, or another user's birthday if you are listed as an admin.
+- `/birthday next`: Shows the next upcoming birthdays.
+- `/waifu roll`: Rolls a random MyAnimeList character from Jikan and adds a Claim button.
+- `/waifu collection`: Shows your claimed waifus with Previous, Delete, and Next buttons.
+- `/waifu leaderboard`: Ranks players by their total Goon Credits across claimed waifus.
 
 ## Usage
 
