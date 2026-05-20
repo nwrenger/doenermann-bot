@@ -17,14 +17,12 @@ pub fn run(
     options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
+    date_format: &str,
 ) -> Result<ResponseContent> {
     let year_option = &options[0];
 
     if let ResolvedValue::String(value) = year_option.value {
-        let parsed_date = {
-            let db = db.read();
-            NaiveDate::parse_from_str(value, &db.config.bot.date_format)?
-        };
+        let parsed_date = NaiveDate::parse_from_str(value, date_format)?;
         let date = if Local::now().date_naive().years_since(parsed_date).is_some() {
             parsed_date
         } else {

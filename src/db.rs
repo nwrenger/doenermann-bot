@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use chrono::{DateTime, NaiveDate, Utc};
 use light_magic::{
@@ -8,16 +8,17 @@ use light_magic::{
 use serde::{Deserialize, Serialize};
 use serenity::all::prelude::TypeMapKey;
 
-use crate::config::Config;
-
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Database {
     pub birthdays: Table<Birthday>,
     pub citations: Table<Message>,
-    pub config: Config,
 }
 
-impl light_magic::atomic::DataStore for Database {}
+impl DataStore for Database {}
+
+impl TypeMapKey for Database {
+    type Value = Arc<AtomicDatabase<Database>>;
+}
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Birthday {
@@ -64,23 +65,4 @@ impl Message {
             utc_timestamp,
         }
     }
-}
-
-pub struct SerenityDatabase {
-    pub inner: Arc<AtomicDatabase<Database>>,
-}
-
-impl SerenityDatabase {
-    pub fn open<P>(path: P) -> Self
-    where
-        P: AsRef<Path>,
-    {
-        Self {
-            inner: Arc::new(DataStore::open(path)),
-        }
-    }
-}
-
-impl TypeMapKey for SerenityDatabase {
-    type Value = SerenityDatabase;
 }

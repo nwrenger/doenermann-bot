@@ -5,8 +5,9 @@ mod error;
 mod util;
 
 use std::path::PathBuf;
-use std::vec;
+use std::sync::Arc;
 
+use light_magic::atomic::DataStore;
 use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::async_trait;
 use serenity::builder::CreateEmbed;
@@ -15,7 +16,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::config::Config;
-use crate::db::SerenityDatabase;
+use crate::db::Database;
 use crate::error::Error;
 use crate::util::embeds_to_string;
 
@@ -29,15 +30,9 @@ impl EventHandler for Handler {
     // Add a role specified in the config on server join
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
         let data = ctx.data.read().await;
-        let db = data
-            .get::<SerenityDatabase>()
-            .expect("Expected a Database")
-            .inner
-            .clone();
+        let config = data.get::<Config>().expect("Expected a Config").clone();
 
-        let role_id: u64 = db
-            .read()
-            .config
+        let role_id: u64 = config
             .server
             .role_on_join
             .parse()
@@ -48,16 +43,15 @@ impl EventHandler for Handler {
 
     // Copies text messages of a citation channel to the database.
     async fn message(&self, ctx: Context, msg: Message) {
-        let data = ctx.data.read().await;
-        let db = data
-            .get::<SerenityDatabase>()
-            .expect("Expected a Database")
-            .inner
-            .clone();
+        let (config, db) = {
+            let data = ctx.data.read().await;
+            (
+                data.get::<Config>().expect("Expected a Config").clone(),
+                data.get::<Database>().expect("Expected a Database").clone(),
+            )
+        };
 
-        let citations_channel: u64 = db
-            .read()
-            .config
+        let citations_channel: u64 = config
             .server
             .citations_channel
             .parse()
@@ -82,27 +76,35 @@ impl EventHandler for Handler {
 
     // Commands handler
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        let db = {
+        let (config, db) = {
             let data = ctx.data.read().await;
-            data.get::<SerenityDatabase>()
-                .expect("Expected a Database")
-                .inner
-                .clone()
+            (
+                data.get::<Config>().expect("Expected a Config").clone(),
+                data.get::<Database>().expect("Expected a Database").clone(),
+            )
         };
 
         if let Interaction::Command(command) = interaction {
             let content = match command.data.name.as_str() {
-                "citations" => commands::citations::run(&command.data.options(), db),
+                "citations" => commands::citations::run(
+                    &command.data.options(),
+                    db,
+                    &config.bot.timestamp_format,
+                ),
                 "delete_birthday" => commands::delete_birthday::run(
                     &command.data.options(),
                     db,
                     command.user.id.into(),
+                    &config.server.admins,
                 ),
                 "döner" => commands::doener::run(&command.data.options()),
                 "next_birthdays" => commands::next_birthdays::run(db),
-                "set_birthday" => {
-                    commands::set_birthday::run(&command.data.options(), db, command.user.id.into())
-                }
+                "set_birthday" => commands::set_birthday::run(
+                    &command.data.options(),
+                    db,
+                    command.user.id.into(),
+                    &config.bot.date_format,
+                ),
                 _ => Err(Error::CommandNotFound),
             };
             match content {
@@ -153,15 +155,9 @@ impl EventHandler for Handler {
     // Setting stuff up on start
     async fn ready(&self, ctx: Context, ready: Ready) {
         let data = ctx.data.read().await;
-        let db = data
-            .get::<SerenityDatabase>()
-            .expect("Expected a Config")
-            .inner
-            .clone();
-        let date_format = db.read().config.bot.date_format.clone();
-        let parsed_guild: u64 = db
-            .read()
-            .config
+        let config = data.get::<Config>().expect("Expected a Config");
+        let date_format = config.bot.date_format.clone();
+        let parsed_guild: u64 = config
             .server
             .guild
             .parse()
@@ -194,9 +190,7 @@ async fn main() {
 
     let config_path = PathBuf::from(CONFIG_PATH);
     let config = Config::read_or_create(config_path).expect("Expected a valid config!");
-    let db = SerenityDatabase::open(&config.paths.database);
-    // Save config in db
-    db.inner.write().config = config.clone();
+    let db = Database::open(&config.paths.database);
 
     let intents = GatewayIntents::all();
 
@@ -206,10 +200,11 @@ async fn main() {
         .await
         .expect("Error creating client");
 
-    // Setting up database
+    // Setting up config && database
     {
         let mut data = client.data.write().await;
-        data.insert::<SerenityDatabase>(db);
+        data.insert::<Config>(Arc::new(config));
+        data.insert::<Database>(Arc::new(db));
     }
 
     // Finally, start a single shard, and start listening to events

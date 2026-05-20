@@ -14,6 +14,7 @@ pub fn run(
     options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
+    admins: &[String],
 ) -> Result<ResponseContent> {
     let user_option = &options[0];
 
@@ -23,14 +24,8 @@ pub fn run(
         // If not return an unauthorized error
         let selected_id = user.id.get();
         if selected_id != user_id {
-            let found = {
-                let db = db.read();
-                db.config
-                    .server
-                    .admins
-                    .iter()
-                    .any(|u| user_id.to_string() == *u)
-            };
+            let user_id = user_id.to_string();
+            let found = admins.iter().any(|admin| admin == &user_id);
             if !found {
                 return Err(Error::Unauthorized);
             }

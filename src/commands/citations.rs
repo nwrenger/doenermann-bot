@@ -20,13 +20,11 @@ const EMPTY_FIELD_VALUE: &str = "\u{200B}";
 pub fn run(
     _options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
+    timestamp_format: &str,
 ) -> Result<ResponseContent> {
-    let (timestamp_format, mut citations) = {
+    let mut citations = {
         let db = db.read();
-        (
-            db.config.bot.timestamp_format.clone(),
-            db.citations.values().cloned().collect::<Vec<_>>(),
-        )
+        db.citations.values().cloned().collect::<Vec<_>>()
     };
 
     citations.sort_by(|a, b| {
@@ -56,7 +54,7 @@ pub fn run(
                 message
                     .utc_timestamp
                     .with_timezone(&Local)
-                    .format(&timestamp_format)
+                    .format(timestamp_format)
             ),
             MAX_FIELD_NAME_CHARS.min(remaining_chars - 1),
         );
