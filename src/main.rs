@@ -192,7 +192,10 @@ async fn main() {
     let config = Config::read_or_create(config_path).expect("Expected a valid config!");
     let db = Database::open(&config.paths.database);
 
-    let intents = GatewayIntents::all();
+    let intents = GatewayIntents::GUILDS
+        | GatewayIntents::GUILD_MEMBERS
+        | GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::MESSAGE_CONTENT;
 
     // Build our client
     let mut client = Client::builder(&config.bot.token, intents)

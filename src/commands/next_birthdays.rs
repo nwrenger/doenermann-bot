@@ -41,16 +41,9 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<ResponseContent> {
             date.with_year(now.year()).unwrap_or_default()
         };
         let age = if date.with_year(now.year()) == now.with_year(now.year()) {
-            Local::now()
-                .date_naive()
-                .years_since(date)
-                .unwrap_or_default()
+            now.years_since(date).unwrap_or_default()
         } else {
-            Local::now()
-                .date_naive()
-                .years_since(date)
-                .unwrap_or_default()
-                + 1
+            now.years_since(date).unwrap_or_default() + 1
         };
         embed = embed.field(
             future.format(FUTURE_FORMAT).to_string(),

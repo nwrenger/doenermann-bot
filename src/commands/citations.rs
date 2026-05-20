@@ -22,16 +22,15 @@ pub fn run(
     db: Arc<AtomicDatabase<Database>>,
     timestamp_format: &str,
 ) -> Result<ResponseContent> {
-    let mut citations = {
+    let citations = {
         let db = db.read();
-        db.citations.values().cloned().collect::<Vec<_>>()
+        db.citations
+            .values()
+            .rev()
+            .take(MAX_CITATION_FIELDS)
+            .cloned()
+            .collect::<Vec<_>>()
     };
-
-    citations.sort_by(|a, b| {
-        b.utc_timestamp
-            .cmp(&a.utc_timestamp)
-            .then_with(|| b.id.cmp(&a.id))
-    });
 
     let title = if citations.is_empty() {
         "No citations have been recorded!".to_string()
@@ -42,20 +41,17 @@ pub fn run(
     let mut remaining_chars = MAX_EMBED_CHARS.saturating_sub(embed_title_len(&title));
     let mut embed = CreateEmbed::default().title(title);
 
-    for message in citations.iter().take(MAX_CITATION_FIELDS) {
+    for message in citations {
         if remaining_chars < 2 {
             break;
         }
 
         let field_name = truncate_text(
-            format!(
-                "<@{}> [{}]",
-                message.user_id,
-                message
-                    .utc_timestamp
-                    .with_timezone(&Local)
-                    .format(timestamp_format)
-            ),
+            message
+                .utc_timestamp
+                .with_timezone(&Local)
+                .format(timestamp_format)
+                .to_string(),
             MAX_FIELD_NAME_CHARS.min(remaining_chars - 1),
         );
         remaining_chars = remaining_chars.saturating_sub(field_name.chars().count());
@@ -64,9 +60,15 @@ pub fn run(
         let field_value = if max_value_chars == 0 {
             TRUNCATION_SUFFIX.to_string()
         } else if message.content.trim().is_empty() {
-            EMPTY_FIELD_VALUE.to_string()
+            truncate_text(
+                format!("<@{}>\n{}", message.user_id, EMPTY_FIELD_VALUE),
+                max_value_chars,
+            )
         } else {
-            truncate_text(message.content.clone(), max_value_chars)
+            truncate_text(
+                format!("<@{}>\n{}", message.user_id, message.content),
+                max_value_chars,
+            )
         };
         remaining_chars = remaining_chars.saturating_sub(field_value.chars().count());
 
