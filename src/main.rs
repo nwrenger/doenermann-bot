@@ -99,6 +99,9 @@ impl EventHandler for Handler {
                     &config.server.admins,
                 ),
                 "döner" => commands::doener::run(&command.data.options()),
+                "waifu" => {
+                    commands::waifu::run(&command.data.options(), db, command.user.id.into())
+                }
                 _ => Err(Error::CommandNotFound),
             };
             match content {
@@ -169,6 +172,7 @@ impl EventHandler for Handler {
                     commands::birthday::register(date_format),
                     commands::citations::register(),
                     commands::doener::register(),
+                    commands::waifu::register(),
                 ],
             )
             .await

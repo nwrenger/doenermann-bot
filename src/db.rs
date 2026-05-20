@@ -7,11 +7,13 @@ use light_magic::{
 };
 use serde::{Deserialize, Serialize};
 use serenity::all::prelude::TypeMapKey;
+use url::Url;
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Database {
     pub birthdays: Table<Birthday>,
     pub citations: Table<Message>,
+    pub collections: Table<Collection>,
 }
 
 impl DataStore for Database {}
@@ -20,7 +22,7 @@ impl TypeMapKey for Database {
     type Value = Arc<AtomicDatabase<Database>>;
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Birthday {
     pub user_id: u64,
     pub date: NaiveDate,
@@ -40,7 +42,7 @@ impl Birthday {
     }
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
     pub id: u64,
     pub user_id: u64,
@@ -64,5 +66,34 @@ impl Message {
             content,
             utc_timestamp,
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Collection {
+    pub user_id: u64,
+    pub waifus: Table<Waifu>,
+}
+
+impl PrimaryKey for Collection {
+    type PrimaryKeyType = u64;
+
+    fn primary_key(&self) -> &Self::PrimaryKeyType {
+        &self.user_id
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Waifu {
+    pub mal_id: u64,
+    pub name: String,
+    pub image: Url,
+}
+
+impl PrimaryKey for Waifu {
+    type PrimaryKeyType = u64;
+
+    fn primary_key(&self) -> &Self::PrimaryKeyType {
+        &self.mal_id
     }
 }
