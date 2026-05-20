@@ -7,7 +7,7 @@ use serenity::all::{
 
 use crate::api::get_random_character;
 use crate::db::{Character, Collection, Database};
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::util::color_goon_credits;
 
 pub async fn run() -> Result<CreateInteractionResponseMessage> {
@@ -41,9 +41,17 @@ pub fn claim(
     character: Character,
 ) -> Result<CreateInteractionResponseMessage> {
     let mut db = db.write();
-    let user_collection = db.collections.get_mut(&user_id);
 
-    if let Some(collection) = user_collection {
+    let found = db
+        .collections
+        .values()
+        .any(|collection| collection.characters.get(&character.mal_id).is_some());
+
+    if found {
+        return Err(Error::AlreadyClaimed);
+    }
+
+    if let Some(collection) = db.collections.get_mut(&user_id) {
         collection.characters.add(character);
     } else {
         let mut collection = Collection::new(user_id);
