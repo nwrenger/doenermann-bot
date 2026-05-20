@@ -2,10 +2,7 @@ use std::sync::Arc;
 
 use chrono::{Local, NaiveDate};
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, CreateEmbed, ResolvedOption,
-    ResolvedValue,
-};
+use serenity::all::{CreateEmbed, ResolvedOption, ResolvedValue};
 
 use crate::{
     db::{Birthday, Database},
@@ -19,7 +16,7 @@ pub fn run(
     user_id: u64,
     date_format: &str,
 ) -> Result<ResponseContent> {
-    let year_option = &options[0];
+    let year_option = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::String(value) = year_option.value {
         let parsed_date = NaiveDate::parse_from_str(value, date_format)?;
@@ -39,17 +36,4 @@ pub fn run(
     } else {
         Err(Error::OptionResolve)
     }
-}
-
-pub fn register(date_format: String) -> CreateCommand {
-    CreateCommand::new("set_birthday")
-        .description("Set your birthday date")
-        .add_option(
-            CreateCommandOption::new(
-                CommandOptionType::String,
-                "birth",
-                format!("Date format: {}", date_format),
-            )
-            .required(true),
-        )
 }

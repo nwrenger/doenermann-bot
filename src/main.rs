@@ -91,20 +91,14 @@ impl EventHandler for Handler {
                     db,
                     &config.bot.timestamp_format,
                 ),
-                "delete_birthday" => commands::delete_birthday::run(
-                    &command.data.options(),
-                    db,
-                    command.user.id.into(),
-                    &config.server.admins,
-                ),
-                "döner" => commands::doener::run(&command.data.options()),
-                "next_birthdays" => commands::next_birthdays::run(db),
-                "set_birthday" => commands::set_birthday::run(
+                "birthday" => commands::birthday::run(
                     &command.data.options(),
                     db,
                     command.user.id.into(),
                     &config.bot.date_format,
+                    &config.server.admins,
                 ),
+                "döner" => commands::doener::run(&command.data.options()),
                 _ => Err(Error::CommandNotFound),
             };
             match content {
@@ -172,11 +166,9 @@ impl EventHandler for Handler {
             .set_commands(
                 &ctx.http,
                 vec![
+                    commands::birthday::register(date_format),
                     commands::citations::register(),
-                    commands::delete_birthday::register(),
                     commands::doener::register(),
-                    commands::next_birthdays::register(),
-                    commands::set_birthday::register(date_format),
                 ],
             )
             .await

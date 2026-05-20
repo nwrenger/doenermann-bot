@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, ResolvedOption, ResolvedValue,
-};
+use serenity::all::{ResolvedOption, ResolvedValue};
 use serenity::builder::CreateEmbed;
 
 use crate::db::Database;
@@ -16,7 +14,7 @@ pub fn run(
     user_id: u64,
     admins: &[String],
 ) -> Result<ResponseContent> {
-    let user_option = &options[0];
+    let user_option = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::User(user, _) = user_option.value {
         // Check if the current user deletes themselves
@@ -51,17 +49,4 @@ pub fn run(
     } else {
         Err(Error::OptionResolve)
     }
-}
-
-pub fn register() -> CreateCommand {
-    CreateCommand::new("delete_birthday")
-        .description("Delete a saved birthday")
-        .add_option(
-            CreateCommandOption::new(
-                CommandOptionType::User,
-                "user",
-                "Select yourself, or another user if you are an admin",
-            )
-            .required(true),
-        )
 }

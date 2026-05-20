@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::{Datelike, Local};
 use light_magic::atomic::AtomicDatabase;
-use serenity::{all::CreateCommand, builder::CreateEmbed};
+use serenity::builder::CreateEmbed;
 
 use crate::db::Database;
 use crate::error::Result;
@@ -57,8 +57,4 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<ResponseContent> {
     }
 
     Ok(ResponseContent::new_only_embed(embed))
-}
-
-pub fn register() -> CreateCommand {
-    CreateCommand::new("next_birthdays").description("Show the next 10 upcoming birthdays")
 }
