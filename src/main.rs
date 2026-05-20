@@ -17,7 +17,7 @@ use serenity::prelude::*;
 use crate::config::Config;
 use crate::db::{Character, Database};
 use crate::error::Error;
-use crate::util::{embeds_to_string, from_delete_payload};
+use crate::util::{embeds_to_string, from_collection_payload};
 
 struct Handler;
 
@@ -140,14 +140,16 @@ impl EventHandler for Handler {
                             character,
                         )
                     }
-                    "previous" | "next" if let Some(mal_id) = payload.parse::<u32>().ok() => {
-                        commands::waifu::collection::run(db, component.user.id.into(), Some(mal_id))
+                    "previous" | "next"
+                        if let Some((owner_id, mal_id)) = from_collection_payload(payload) =>
+                    {
+                        commands::waifu::collection::run(db, owner_id, Some(mal_id))
                     }
-                    "delete" if let Some((user_id, mal_id)) = from_delete_payload(payload) => {
+                    "delete" if let Some((owner_id, mal_id)) = from_collection_payload(payload) => {
                         commands::waifu::collection::delete(
                             db,
                             component.user.id.into(),
-                            user_id,
+                            owner_id,
                             mal_id,
                         )
                     }

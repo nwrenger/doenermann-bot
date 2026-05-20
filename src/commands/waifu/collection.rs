@@ -44,7 +44,8 @@ pub fn run(
 
             let buttons = CreateActionRow::Buttons(vec![
                 CreateButton::new(format!(
-                    "previous:{}",
+                    "previous:{},{}",
+                    user_id,
                     previous_id.unwrap_or(current.mal_id)
                 ))
                 .label("Previous")
@@ -53,10 +54,14 @@ pub fn run(
                 CreateButton::new(format!("delete:{},{}", user_id, current.mal_id))
                     .label("Delete")
                     .style(ButtonStyle::Danger),
-                CreateButton::new(format!("next:{}", next_id.unwrap_or(current.mal_id)))
-                    .label("Next")
-                    .style(ButtonStyle::Secondary)
-                    .disabled(next_id.is_none()),
+                CreateButton::new(format!(
+                    "next:{},{}",
+                    user_id,
+                    next_id.unwrap_or(current.mal_id)
+                ))
+                .label("Next")
+                .style(ButtonStyle::Secondary)
+                .disabled(next_id.is_none()),
             ]);
 
             return Ok(CreateInteractionResponseMessage::new()

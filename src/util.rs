@@ -69,15 +69,7 @@ pub fn color_goon_credits(goon_credits: u32) -> Option<u32> {
     }
 }
 
-pub fn from_delete_payload(payload: &str) -> Option<(u64, u32)> {
-    let parts: Vec<&str> = payload.split(',').collect();
-
-    if parts.len() != 2 {
-        return None;
-    }
-
-    let owner_id = parts[0].parse::<u64>().ok()?;
-    let mal_id = parts[1].parse::<u32>().ok()?;
-
-    Some((owner_id, mal_id))
+pub fn from_collection_payload(payload: &str) -> Option<(u64, u32)> {
+    let (owner_id, mal_id) = payload.split_once(',')?;
+    Some((owner_id.parse().ok()?, mal_id.parse().ok()?))
 }
