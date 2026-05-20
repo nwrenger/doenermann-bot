@@ -20,8 +20,6 @@ pub enum Error {
     Jikan(String),
     /// Unathorized action
     Unauthorized,
-    /// Character already claimed
-    AlreadyClaimed,
     /// Command/Interaction not found
     NotFound,
 }
@@ -46,8 +44,6 @@ impl Error {
             Error::Jikan(e) => CreateEmbed::default().title(format!("Jikan API Error: {e}!")),
             Error::Unauthorized => CreateEmbed::default()
                 .title(String::from("You are unauthorized to do that action!")),
-            Error::AlreadyClaimed => CreateEmbed::default()
-                .title(String::from("The character has already been claimed!")),
             Error::NotFound => {
                 CreateEmbed::default().title(String::from("Command/Interaction not found!"))
             }

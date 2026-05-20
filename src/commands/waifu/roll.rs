@@ -7,7 +7,7 @@ use serenity::all::{
 
 use crate::api::get_random_character;
 use crate::db::{Character, Collection, Database};
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::util::color_goon_credits;
 
 pub async fn run() -> Result<CreateInteractionResponseMessage> {
@@ -42,29 +42,33 @@ pub fn claim(
 ) -> Result<CreateInteractionResponseMessage> {
     let mut db = db.write();
 
-    let found = db
+    let claimed_by = db
         .collections
         .values()
-        .any(|collection| collection.characters.get(&character.mal_id).is_some());
+        .find(|collection| collection.characters.get(&character.mal_id).is_some())
+        .map(|collection| collection.user_name.clone());
 
-    if found {
-        return Err(Error::AlreadyClaimed);
+    if let Some(user_name) = claimed_by {
+        return Ok(claimed_message(&user_name));
     }
 
     if let Some(collection) = db.collections.get_mut(&user_id) {
+        collection.user_name = user_name.to_string();
         collection.characters.add(character);
     } else {
-        let mut collection = Collection::new(user_id);
+        let mut collection = Collection::new(user_id, user_name.to_string());
         collection.characters.add(character);
         db.collections.add(collection);
     }
 
-    Ok(
-        CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
-            CreateButton::new("claimed")
-                .label(format!("Claimed by {}!", user_name))
-                .style(ButtonStyle::Secondary)
-                .disabled(true),
-        ])]),
-    )
+    Ok(claimed_message(user_name))
+}
+
+fn claimed_message(user_name: &str) -> CreateInteractionResponseMessage {
+    CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
+        CreateButton::new("claimed")
+            .label(format!("Claimed by {}!", user_name))
+            .style(ButtonStyle::Secondary)
+            .disabled(true),
+    ])])
 }
