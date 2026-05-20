@@ -82,11 +82,26 @@ pub fn delete(
     mal_id: u32,
 ) -> Result<CreateInteractionResponseMessage> {
     if user_id == owner_id {
-        if let Some(collection) = db.write().collections.get_mut(&owner_id) {
-            collection.characters.delete(&mal_id);
-        }
+        let previous_id = {
+            let mut db = db.write();
 
-        run(db, owner_id, None)
+            db.collections.get_mut(&owner_id).and_then(|collection| {
+                let characters = collection.characters.values().cloned().collect::<Vec<_>>();
+                let current_index = characters
+                    .iter()
+                    .position(|character| character.mal_id == mal_id)?;
+                let previous_id = current_index
+                    .checked_sub(1)
+                    .and_then(|index| characters.get(index))
+                    .map(|character| character.mal_id);
+
+                collection.characters.delete(&mal_id);
+
+                previous_id
+            })
+        };
+
+        run(db, owner_id, previous_id)
     } else {
         Err(Error::Unauthorized)
     }
