@@ -30,7 +30,7 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionRespons
 
     players.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| b.2.cmp(&a.2)));
 
-    let mut embed = CreateEmbed::new().title("Waifu Leaderboard");
+    let mut embed = CreateEmbed::new().title("Waifu Leaderboard:");
 
     if players.is_empty() {
         embed = embed.description("No waifus have been claimed yet!");
