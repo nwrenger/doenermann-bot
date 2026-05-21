@@ -17,5 +17,5 @@ guild = ""
 citations_channel = ""
 # Id of the role which should be added on join
 role_on_join = ""
-# Id of the bot's admin, can be multiple
+# Id of the bot's admins, can be multiple
 admins = [ "" ]
