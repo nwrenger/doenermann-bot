@@ -11,6 +11,7 @@ use serenity::all::{
 };
 
 use crate::{
+    api::MAL_PAGE,
     db::{Character, Database},
     error::{Error, Result},
     util::color_goon_credits,
@@ -56,11 +57,10 @@ pub fn register() -> CreateCommand {
 }
 
 pub fn create_character_embed(character: &Character) -> CreateEmbed {
-    let mut embed = CreateEmbed::default().title(&character.name).field(
-        "Goon Credits",
-        character.goon_credits.to_string(),
-        true,
-    );
+    let mut embed = CreateEmbed::default()
+        .title(&character.name)
+        .field("Goon Credits", character.goon_credits.to_string(), true)
+        .url(format!("{}/{}", MAL_PAGE, character.mal_id));
 
     if let Some(image_url) = character.image_url() {
         embed = embed.image(image_url);

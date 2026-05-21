@@ -126,7 +126,7 @@ impl Character {
         if self.image_key.is_empty() {
             None
         } else {
-            Some(format!("{IMAGE_BASE}{}{IMAGE_EXTENSION}", self.image_key))
+            Some(format!("{IMAGE_BASE}/{}.{IMAGE_EXTENSION}", self.image_key))
         }
     }
 
