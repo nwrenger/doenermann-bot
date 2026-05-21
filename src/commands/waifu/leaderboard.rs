@@ -16,14 +16,14 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionRespons
         .map(|collection| {
             let goon_credits = collection
                 .characters
-                .values()
+                .iter()
                 .map(|character| character.goon_credits as u64)
                 .sum::<u64>();
 
             (
                 collection.user_id,
                 goon_credits,
-                collection.characters.values().len(),
+                collection.characters.len(),
             )
         })
         .collect::<Vec<_>>();

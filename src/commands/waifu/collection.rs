@@ -12,19 +12,12 @@ use crate::util::color_goon_credits;
 pub fn run(
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
-    mal_id: Option<u32>,
+    index: Option<usize>,
 ) -> Result<CreateInteractionResponseMessage> {
     if let Some(collection) = db.read().collections.get(&user_id) {
-        let characters = collection.characters.values().cloned().collect::<Vec<_>>();
-        let current_index = mal_id
-            .and_then(|mal_id| {
-                characters
-                    .iter()
-                    .position(|character| character.mal_id == mal_id)
-            })
-            .unwrap_or_default();
+        let current_index = index.unwrap_or_default();
 
-        if let Some(current) = characters.get(current_index) {
+        if let Some(current) = collection.characters.get(current_index) {
             let mut embed = CreateEmbed::default()
                 .title(&current.name)
                 .field("Goon Credits", current.goon_credits.to_string(), true)
@@ -36,28 +29,28 @@ pub fn run(
 
             let previous_id = current_index
                 .checked_sub(1)
-                .and_then(|index| characters.get(index))
-                .map(|character| character.mal_id);
-            let next_id = characters
+                .filter(|index| collection.characters.get(*index).is_some());
+            let next_id = collection
+                .characters
                 .get(current_index + 1)
-                .map(|character| character.mal_id);
+                .map(|_| current_index + 1);
 
             let buttons = CreateActionRow::Buttons(vec![
                 CreateButton::new(format!(
                     "previous:{},{}",
                     user_id,
-                    previous_id.unwrap_or(current.mal_id)
+                    previous_id.unwrap_or(current_index)
                 ))
                 .label("Previous")
                 .style(ButtonStyle::Secondary)
                 .disabled(previous_id.is_none()),
-                CreateButton::new(format!("delete:{},{}", user_id, current.mal_id))
+                CreateButton::new(format!("delete:{},{}", user_id, current_index))
                     .label("Delete")
                     .style(ButtonStyle::Danger),
                 CreateButton::new(format!(
                     "next:{},{}",
                     user_id,
-                    next_id.unwrap_or(current.mal_id)
+                    next_id.unwrap_or(current_index)
                 ))
                 .label("Next")
                 .style(ButtonStyle::Secondary)
@@ -79,29 +72,23 @@ pub fn delete(
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
     owner_id: u64,
-    mal_id: u32,
+    index: usize,
 ) -> Result<CreateInteractionResponseMessage> {
     if user_id == owner_id {
-        let previous_id = {
+        let previous_index = {
             let mut db = db.write();
 
             db.collections.get_mut(&owner_id).and_then(|collection| {
-                let characters = collection.characters.values().cloned().collect::<Vec<_>>();
-                let current_index = characters
-                    .iter()
-                    .position(|character| character.mal_id == mal_id)?;
-                let previous_id = current_index
-                    .checked_sub(1)
-                    .and_then(|index| characters.get(index))
-                    .map(|character| character.mal_id);
+                collection.characters.get(index)?;
+                let previous_index = index.checked_sub(1);
 
-                collection.characters.delete(&mal_id);
+                collection.characters.remove(index);
 
-                previous_id
+                previous_index
             })
         };
 
-        run(db, owner_id, previous_id)
+        run(db, owner_id, previous_index)
     } else {
         Err(Error::Unauthorized)
     }

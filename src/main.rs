@@ -141,16 +141,16 @@ impl EventHandler for Handler {
                         )
                     }
                     "previous" | "next"
-                        if let Some((owner_id, mal_id)) = from_collection_payload(payload) =>
+                        if let Some((owner_id, index)) = from_collection_payload(payload) =>
                     {
-                        commands::waifu::collection::run(db, owner_id, Some(mal_id))
+                        commands::waifu::collection::run(db, owner_id, Some(index))
                     }
-                    "delete" if let Some((owner_id, mal_id)) = from_collection_payload(payload) => {
+                    "delete" if let Some((owner_id, index)) = from_collection_payload(payload) => {
                         commands::waifu::collection::delete(
                             db,
                             component.user.id.into(),
                             owner_id,
-                            mal_id,
+                            index,
                         )
                     }
                     _ => Err(Error::NotFound),

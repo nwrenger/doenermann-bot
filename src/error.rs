@@ -20,7 +20,7 @@ pub enum Error {
     Jikan(String),
     /// Unathorized action
     Unauthorized,
-    /// Command/Interaction not found
+    /// Resource not found
     NotFound,
 }
 
@@ -44,9 +44,7 @@ impl Error {
             Error::Jikan(e) => CreateEmbed::default().title(format!("Jikan API Error: {e}!")),
             Error::Unauthorized => CreateEmbed::default()
                 .title(String::from("You are unauthorized to do that action!")),
-            Error::NotFound => {
-                CreateEmbed::default().title(String::from("Command/Interaction not found!"))
-            }
+            Error::NotFound => CreateEmbed::default().title(String::from("Resource not found!")),
         }
         .color(Colour::RED);
 

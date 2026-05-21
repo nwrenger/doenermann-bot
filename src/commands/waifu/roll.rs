@@ -42,33 +42,20 @@ pub fn claim(
 ) -> Result<CreateInteractionResponseMessage> {
     let mut db = db.write();
 
-    let claimed_by = db
-        .collections
-        .values()
-        .find(|collection| collection.characters.get(&character.mal_id).is_some())
-        .map(|collection| collection.user_name.clone());
-
-    if let Some(user_name) = claimed_by {
-        return Ok(claimed_message(&user_name));
-    }
-
     if let Some(collection) = db.collections.get_mut(&user_id) {
-        collection.user_name = user_name.to_string();
-        collection.characters.add(character);
+        collection.characters.push(character);
     } else {
-        let mut collection = Collection::new(user_id, user_name.to_string());
-        collection.characters.add(character);
+        let mut collection = Collection::new(user_id);
+        collection.characters.push(character);
         db.collections.add(collection);
     }
 
-    Ok(claimed_message(user_name))
-}
-
-fn claimed_message(user_name: &str) -> CreateInteractionResponseMessage {
-    CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
-        CreateButton::new("claimed")
-            .label(format!("Claimed by {}!", user_name))
-            .style(ButtonStyle::Secondary)
-            .disabled(true),
-    ])])
+    Ok(
+        CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
+            CreateButton::new("claimed")
+                .label(format!("Claimed by {}!", user_name))
+                .style(ButtonStyle::Secondary)
+                .disabled(true),
+        ])]),
+    )
 }

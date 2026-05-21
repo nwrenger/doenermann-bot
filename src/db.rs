@@ -74,8 +74,7 @@ impl Message {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Collection {
     pub user_id: u64,
-    pub user_name: String,
-    pub characters: Table<Character>,
+    pub characters: Vec<Character>,
 }
 
 impl PrimaryKey for Collection {
@@ -87,11 +86,10 @@ impl PrimaryKey for Collection {
 }
 
 impl Collection {
-    pub fn new(user_id: u64, user_name: String) -> Self {
+    pub fn new(user_id: u64) -> Self {
         Self {
             user_id,
-            user_name,
-            characters: Table::default(),
+            characters: vec![],
         }
     }
 }

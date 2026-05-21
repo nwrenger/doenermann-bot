@@ -69,7 +69,7 @@ pub fn color_goon_credits(goon_credits: u32) -> Option<u32> {
     }
 }
 
-pub fn from_collection_payload(payload: &str) -> Option<(u64, u32)> {
-    let (owner_id, mal_id) = payload.split_once(',')?;
-    Some((owner_id.parse().ok()?, mal_id.parse().ok()?))
+pub fn from_collection_payload(payload: &str) -> Option<(u64, usize)> {
+    let (owner_id, index) = payload.split_once(',')?;
+    Some((owner_id.parse().ok()?, index.parse().ok()?))
 }
