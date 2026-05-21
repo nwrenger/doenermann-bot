@@ -56,10 +56,15 @@ pub fn register() -> CreateCommand {
 }
 
 pub fn create_character_embed(character: &Character) -> CreateEmbed {
-    let mut embed = CreateEmbed::default()
-        .title(&character.name)
-        .field("Goon Credits", character.goon_credits.to_string(), true)
-        .image(character.image.to_string());
+    let mut embed = CreateEmbed::default().title(&character.name).field(
+        "Goon Credits",
+        character.goon_credits.to_string(),
+        true,
+    );
+
+    if let Some(image_url) = character.image_url() {
+        embed = embed.image(image_url);
+    }
 
     if let Some(color) = color_goon_credits(character.goon_credits) {
         embed = embed.color(color);

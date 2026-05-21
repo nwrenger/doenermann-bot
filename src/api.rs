@@ -2,6 +2,8 @@ use serde::Deserialize;
 use url::Url;
 
 const API_BASE: &str = "https://api.jikan.moe/v4";
+pub const IMAGE_BASE: &str = "https://cdn.myanimelist.net/images/characters/";
+pub const IMAGE_EXTENSION: &str = ".webp";
 
 use crate::{
     db::Character,

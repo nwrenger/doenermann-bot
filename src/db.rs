@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serenity::all::prelude::TypeMapKey;
 use url::Url;
 
-use crate::api::RadomCharacterResponse;
+use crate::api::{RadomCharacterResponse, IMAGE_BASE, IMAGE_EXTENSION};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Database {
@@ -99,7 +99,7 @@ pub struct Character {
     pub mal_id: u32,
     pub name: String,
     pub goon_credits: u32,
-    pub image: Url,
+    pub image_key: String,
 }
 
 impl PrimaryKey for Character {
@@ -116,22 +116,37 @@ impl From<RadomCharacterResponse> for Character {
             mal_id: r.data.mal_id,
             name: r.data.name,
             goon_credits: r.data.favorites,
-            image: r.data.images.webp.image_url,
+            image_key: Self::image_key_from_url(&r.data.images.webp.image_url).unwrap_or_default(),
         }
     }
 }
 
 impl Character {
+    pub fn image_url(&self) -> Option<String> {
+        if self.image_key.is_empty() {
+            None
+        } else {
+            Some(format!("{IMAGE_BASE}{}{IMAGE_EXTENSION}", self.image_key))
+        }
+    }
+
+    pub fn image_key_from_url(url: &Url) -> Option<String> {
+        url.path()
+            .strip_prefix("/images/characters/")
+            .and_then(|path| path.strip_suffix(".webp"))
+            .map(str::to_string)
+    }
+
     pub fn from_payload(payload: &str) -> Option<Self> {
         let (mal_id, payload) = payload.split_once(',')?;
-        let (payload, image) = payload.rsplit_once(',')?;
+        let (payload, image_key) = payload.rsplit_once(',')?;
         let (name, goon_credits) = payload.rsplit_once(',')?;
 
         Some(Self {
             mal_id: mal_id.parse().ok()?,
             name: name.to_string(),
             goon_credits: goon_credits.parse().ok()?,
-            image: Url::parse(image).ok()?,
+            image_key: image_key.to_string(),
         })
     }
 }

@@ -14,7 +14,7 @@ pub async fn run() -> Result<CreateInteractionResponseMessage> {
     let embed = create_character_embed(&character);
     let claim = CreateActionRow::Buttons(vec![CreateButton::new(format!(
         "claim:{},{},{},{}",
-        character.mal_id, &character.name, character.goon_credits, character.image
+        character.mal_id, &character.name, character.goon_credits, character.image_key
     ))
     .label("Claim")
     .style(ButtonStyle::Secondary)]);
