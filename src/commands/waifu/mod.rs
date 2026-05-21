@@ -6,13 +6,14 @@ use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
 use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, CreateInteractionResponseMessage,
-    ResolvedOption, ResolvedValue,
+    CommandOptionType, CreateCommand, CreateCommandOption, CreateEmbed,
+    CreateInteractionResponseMessage, ResolvedOption, ResolvedValue,
 };
 
 use crate::{
-    db::Database,
+    db::{Character, Database},
     error::{Error, Result},
+    util::color_goon_credits,
 };
 
 pub async fn run<'a>(
@@ -52,4 +53,17 @@ pub fn register() -> CreateCommand {
             "roll",
             "Roll for new waifus",
         ))
+}
+
+pub fn create_character_embed(character: &Character) -> CreateEmbed {
+    let mut embed = CreateEmbed::default()
+        .title(&character.name)
+        .field("Goon Credits", character.goon_credits.to_string(), true)
+        .image(character.image.to_string());
+
+    if let Some(color) = color_goon_credits(character.goon_credits) {
+        embed = embed.color(color);
+    }
+
+    embed
 }

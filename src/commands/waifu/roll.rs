@@ -1,27 +1,17 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{
-    ButtonStyle, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponseMessage,
-};
+use serenity::all::{ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponseMessage};
 
 use crate::api::get_random_character;
+use crate::commands::waifu::create_character_embed;
 use crate::db::{Character, Collection, Database};
 use crate::error::Result;
-use crate::util::color_goon_credits;
 
 pub async fn run() -> Result<CreateInteractionResponseMessage> {
     let character = get_random_character().await?;
 
-    let mut embed = CreateEmbed::default()
-        .title(&character.name)
-        .field("Goon Credits", character.goon_credits.to_string(), true)
-        .image(character.image.to_string());
-
-    if let Some(color) = color_goon_credits(character.goon_credits) {
-        embed = embed.color(color);
-    }
-
+    let embed = create_character_embed(&character);
     let claim = CreateActionRow::Buttons(vec![CreateButton::new(format!(
         "claim:{},{},{},{}",
         character.mal_id, &character.name, character.goon_credits, character.image

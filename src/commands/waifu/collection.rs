@@ -5,9 +5,9 @@ use serenity::all::{
     ButtonStyle, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponseMessage,
 };
 
+use crate::commands::waifu::create_character_embed;
 use crate::db::Database;
 use crate::error::{Error, Result};
-use crate::util::color_goon_credits;
 
 pub fn run(
     db: Arc<AtomicDatabase<Database>>,
@@ -18,14 +18,7 @@ pub fn run(
         let current_index = index.unwrap_or_default();
 
         if let Some(current) = collection.characters.get(current_index) {
-            let mut embed = CreateEmbed::default()
-                .title(&current.name)
-                .field("Goon Credits", current.goon_credits.to_string(), true)
-                .image(current.image.to_string());
-
-            if let Some(color) = color_goon_credits(current.goon_credits) {
-                embed = embed.color(color);
-            }
+            let embed = create_character_embed(current);
 
             let previous_id = current_index
                 .checked_sub(1)
