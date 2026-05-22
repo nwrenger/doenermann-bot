@@ -1,4 +1,8 @@
+# Directories
 /target
 /.vscode
+
+# Files
 Cargo.lock
 **/.DS_Store
+config.toml
