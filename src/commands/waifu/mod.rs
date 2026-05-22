@@ -28,7 +28,7 @@ pub async fn run<'a>(
         match subcommand.name {
             "collection" => collection::run(db, user_id, None),
             "leaderboard" => leaderboard::run(db),
-            "roll" => roll::run().await,
+            "roll" => roll::run(db).await,
             _ => Err(Error::NotFound),
         }
     } else {

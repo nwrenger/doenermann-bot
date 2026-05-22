@@ -8,7 +8,7 @@ use crate::commands::waifu::create_character_embed;
 use crate::db::{Character, Collection, Database};
 use crate::error::Result;
 
-pub async fn run() -> Result<CreateInteractionResponseMessage> {
+pub async fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponseMessage> {
     let character = get_random_character().await?;
 
     let embed = create_character_embed(&character);
@@ -18,6 +18,9 @@ pub async fn run() -> Result<CreateInteractionResponseMessage> {
     ))
     .label("Claim")
     .style(ButtonStyle::Secondary)]);
+
+    // Increment the roll count
+    db.write().roll_count += 1;
 
     Ok(CreateInteractionResponseMessage::new()
         .embed(embed)

@@ -16,6 +16,7 @@ pub struct Database {
     pub birthdays: Table<Birthday>,
     pub citations: Table<Message>,
     pub collections: Table<Collection>,
+    pub roll_count: u64,
 }
 
 impl DataStore for Database {}

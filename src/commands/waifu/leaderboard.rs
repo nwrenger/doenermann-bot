@@ -9,28 +9,41 @@ use crate::error::Result;
 const MAX_LEADERBOARD_FIELDS: usize = 25;
 
 pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponseMessage> {
-    let mut players = db
-        .read()
-        .collections
-        .values()
-        .map(|collection| {
-            let goon_credits = collection
-                .characters
-                .iter()
-                .map(|character| character.goon_credits as u64)
-                .sum::<u64>();
+    let (mut players, total_goon_credits, roll_count) = {
+        let db = db.read();
+        let players = db
+            .collections
+            .values()
+            .map(|collection| {
+                let goon_credits = collection
+                    .characters
+                    .iter()
+                    .map(|character| character.goon_credits as u64)
+                    .sum::<u64>();
 
-            (
-                collection.user_id,
-                goon_credits,
-                collection.characters.len(),
-            )
-        })
-        .collect::<Vec<_>>();
+                (
+                    collection.user_id,
+                    goon_credits,
+                    collection.characters.len(),
+                )
+            })
+            .collect::<Vec<_>>();
+        let total_goon_credits: u64 = players
+            .iter()
+            .map(|(_, goon_credits, _)| goon_credits)
+            .sum();
+
+        (players, total_goon_credits, db.roll_count)
+    };
 
     players.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| b.2.cmp(&a.2)));
 
-    let mut embed = CreateEmbed::new().title("Waifu Leaderboard:");
+    let mut embed = CreateEmbed::new()
+        .title("Waifu Leaderboard:")
+        .description(format!(
+            "Total Goon Credits: {} across {} rolls",
+            total_goon_credits, roll_count
+        ));
 
     if players.is_empty() {
         embed = embed.description("No waifus have been claimed yet!");
