@@ -1,14 +1,16 @@
-use serenity::all::{CreateCommand, CreateInteractionResponseMessage, ResolvedOption};
+use serenity::all::{
+    CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage, ResolvedOption,
+};
 use serenity::builder::CreateEmbed;
 
 use crate::error::Result;
 
-pub fn run(_options: &[ResolvedOption]) -> Result<CreateInteractionResponseMessage> {
-    Ok(CreateInteractionResponseMessage::new()
+pub fn run(_options: &[ResolvedOption]) -> Result<CreateInteractionResponse<'static>> {
+    Ok(CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
         .content(String::from("Ne diggi, denkste ich habe das Geld dafür? Aber hier das sollte dir helfen:"))
-        .embed(CreateEmbed::default().title("Döner bestellen in 30159 Hannover | Lieferando.de").url("https://www.lieferando.de/lieferservice/doener/hannover-30159").description("Bestelle Döner in 30159 Hannover online über Lieferando.de. Food Tracker® und verschiedene Bezahlmethoden. Genieße Deine Döner Lieferung!")))
+        .embed(CreateEmbed::default().title("Döner bestellen in 30159 Hannover | Lieferando.de").url("https://www.lieferando.de/lieferservice/doener/hannover-30159").description("Bestelle Döner in 30159 Hannover online über Lieferando.de. Food Tracker® und verschiedene Bezahlmethoden. Genieße Deine Döner Lieferung!"))))
 }
 
-pub fn register() -> CreateCommand {
+pub fn register() -> CreateCommand<'static> {
     CreateCommand::new("döner").description("Döner bestellen?")
 }

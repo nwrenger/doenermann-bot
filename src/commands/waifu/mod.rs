@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
 use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, CreateEmbed,
-    CreateInteractionResponseMessage, ResolvedOption, ResolvedValue,
+    CommandOptionType, CreateCommand, CreateCommandOption, CreateEmbed, CreateInteractionResponse,
+    ResolvedOption, ResolvedValue,
 };
 
 use crate::{
@@ -18,10 +18,10 @@ use crate::{
 };
 
 pub async fn run<'a>(
-    options: &'a [ResolvedOption<'a>],
+    options: &[ResolvedOption<'a>],
     db: Arc<AtomicDatabase<Database>>,
     user_id: u64,
-) -> Result<CreateInteractionResponseMessage> {
+) -> Result<CreateInteractionResponse<'static>> {
     let subcommand = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::SubCommand(_) = &subcommand.value {
@@ -36,13 +36,13 @@ pub async fn run<'a>(
     }
 }
 
-pub fn register() -> CreateCommand {
+pub fn register() -> CreateCommand<'static> {
     CreateCommand::new("waifu")
         .description("Manage waifus")
         .add_option(CreateCommandOption::new(
             CommandOptionType::SubCommand,
             "collection",
-            "See your waifu collection",
+            "Manage your waifu collection",
         ))
         .add_option(CreateCommandOption::new(
             CommandOptionType::SubCommand,
@@ -56,14 +56,14 @@ pub fn register() -> CreateCommand {
         ))
 }
 
-pub fn create_character_embed(character: &Character) -> CreateEmbed {
+pub fn create_character_embed(character: &Character) -> CreateEmbed<'static> {
     let mut embed = CreateEmbed::default()
-        .title(&character.name)
+        .title(character.name.clone())
         .field("Goon Credits", character.goon_credits.to_string(), true)
         .url(format!("{}/{}", MAL_PAGE, character.mal_id));
 
     if let Some(image_url) = character.image_url() {
-        embed = embed.image(image_url);
+        embed = embed.image(image_url.to_string());
     }
 
     if let Some(color) = color_goon_credits(character.goon_credits) {

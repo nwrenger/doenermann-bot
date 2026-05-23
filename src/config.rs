@@ -1,7 +1,6 @@
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
-use serenity::all::prelude::TypeMapKey;
 
 use crate::error::Result;
 
@@ -10,10 +9,6 @@ pub struct Config {
     pub bot: Bot,
     pub paths: Paths,
     pub server: Server,
-}
-
-impl TypeMapKey for Config {
-    type Value = Arc<Config>;
 }
 
 impl Config {

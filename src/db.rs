@@ -1,12 +1,9 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, NaiveDate, Utc};
 use light_magic::{
-    atomic::{AtomicDatabase, DataStore},
+    atomic::DataStore,
     table::{PrimaryKey, Table},
 };
 use serde::{Deserialize, Serialize};
-use serenity::all::prelude::TypeMapKey;
 use url::Url;
 
 use crate::api::{RadomCharacterResponse, IMAGE_BASE, IMAGE_EXTENSION};
@@ -20,10 +17,6 @@ pub struct Database {
 }
 
 impl DataStore for Database {}
-
-impl TypeMapKey for Database {
-    type Value = Arc<AtomicDatabase<Database>>;
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Birthday {

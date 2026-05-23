@@ -3,7 +3,9 @@ use std::sync::Arc;
 use chrono::Local;
 use light_magic::atomic::AtomicDatabase;
 use serenity::{
-    all::{CreateCommand, CreateInteractionResponseMessage, ResolvedOption},
+    all::{
+        CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage, ResolvedOption,
+    },
     builder::CreateEmbed,
 };
 
@@ -20,7 +22,7 @@ pub fn run(
     _options: &[ResolvedOption],
     db: Arc<AtomicDatabase<Database>>,
     timestamp_format: &str,
-) -> Result<CreateInteractionResponseMessage> {
+) -> Result<CreateInteractionResponse<'static>> {
     let citations = {
         let db = db.read();
         db.citations
@@ -74,7 +76,9 @@ pub fn run(
         embed = embed.field(field_name, field_value, false);
     }
 
-    Ok(CreateInteractionResponseMessage::new().embed(embed))
+    Ok(CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new().embed(embed),
+    ))
 }
 
 fn embed_title_len(title: &str) -> usize {
@@ -100,6 +104,6 @@ fn truncate_text(value: String, max_chars: usize) -> String {
         + TRUNCATION_SUFFIX
 }
 
-pub fn register() -> CreateCommand {
+pub fn register() -> CreateCommand<'static> {
     CreateCommand::new("citations").description("Show which and how many citations were recorded")
 }

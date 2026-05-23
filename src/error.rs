@@ -1,4 +1,6 @@
-use serenity::all::{Colour, CreateEmbed, CreateInteractionResponseMessage};
+use serenity::all::{
+    Colour, CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage,
+};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -25,7 +27,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn error_message(self) -> CreateInteractionResponseMessage {
+    pub fn error_response(self) -> CreateInteractionResponse<'static> {
         let embed = match self {
             Error::OptionResolve => {
                 CreateEmbed::default().title(String::from("Got invalid option!"))
@@ -48,9 +50,11 @@ impl Error {
         }
         .color(Colour::RED);
 
-        CreateInteractionResponseMessage::new()
-            .add_embed(embed)
-            .ephemeral(true)
+        CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .add_embed(embed)
+                .ephemeral(true),
+        )
     }
 }
 

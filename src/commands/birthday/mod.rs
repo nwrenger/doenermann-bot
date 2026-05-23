@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
 use serenity::all::{
-    CommandOptionType, CreateCommand, CreateCommandOption, CreateInteractionResponseMessage,
+    CommandOptionType, CreateCommand, CreateCommandOption, CreateInteractionResponse,
     ResolvedOption, ResolvedValue,
 };
 
@@ -21,7 +21,7 @@ pub fn run(
     user_id: u64,
     date_format: &str,
     admins: &[String],
-) -> Result<CreateInteractionResponseMessage> {
+) -> Result<CreateInteractionResponse<'static>> {
     let subcommand = options.first().ok_or(Error::OptionResolve)?;
 
     if let ResolvedValue::SubCommand(options) = &subcommand.value {
@@ -36,7 +36,7 @@ pub fn run(
     }
 }
 
-pub fn register(date_format: String) -> CreateCommand {
+pub fn register(date_format: String) -> CreateCommand<'static> {
     CreateCommand::new("birthday")
         .description("Manage birthdays")
         .add_option(

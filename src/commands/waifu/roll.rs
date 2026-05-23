@@ -1,30 +1,38 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{ButtonStyle, CreateActionRow, CreateButton, CreateInteractionResponseMessage};
+use serenity::all::{
+    ButtonStyle, CreateActionRow, CreateButton, CreateComponent, CreateInteractionResponse,
+    CreateInteractionResponseMessage,
+};
 
 use crate::api::get_random_character;
 use crate::commands::waifu::create_character_embed;
 use crate::db::{Character, Collection, Database};
 use crate::error::Result;
 
-pub async fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponseMessage> {
+pub async fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponse<'static>> {
     let character = get_random_character().await?;
 
     let embed = create_character_embed(&character);
-    let claim = CreateActionRow::Buttons(vec![CreateButton::new(format!(
-        "claim:{},{},{},{}",
-        character.mal_id, &character.name, character.goon_credits, character.image_key
-    ))
-    .label("Claim")
-    .style(ButtonStyle::Secondary)]);
 
-    // Increment the roll count
+    let claim = CreateComponent::ActionRow(CreateActionRow::Buttons(
+        vec![CreateButton::new(format!(
+            "claim:{},{},{},{}",
+            character.mal_id, character.name, character.goon_credits, character.image_key
+        ))
+        .label("Claim")
+        .style(ButtonStyle::Secondary)]
+        .into(),
+    ));
+
     db.write().roll_count += 1;
 
-    Ok(CreateInteractionResponseMessage::new()
-        .embed(embed)
-        .components(vec![claim]))
+    Ok(CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new()
+            .embed(embed)
+            .components(vec![claim]),
+    ))
 }
 
 pub fn claim(
@@ -32,7 +40,7 @@ pub fn claim(
     user_id: u64,
     user_name: &str,
     character: Character,
-) -> Result<CreateInteractionResponseMessage> {
+) -> Result<CreateInteractionResponse<'static>> {
     let mut db = db.write();
 
     if let Some(collection) = db.collections.get_mut(&user_id) {
@@ -43,12 +51,15 @@ pub fn claim(
         db.collections.add(collection);
     }
 
-    Ok(
-        CreateInteractionResponseMessage::new().components(vec![CreateActionRow::Buttons(vec![
-            CreateButton::new("claimed")
-                .label(format!("Claimed by {}!", user_name))
-                .style(ButtonStyle::Secondary)
-                .disabled(true),
-        ])]),
-    )
+    Ok(CreateInteractionResponse::UpdateMessage(
+        CreateInteractionResponseMessage::new().components(vec![CreateComponent::ActionRow(
+            CreateActionRow::Buttons(
+                vec![CreateButton::new("claimed")
+                    .label(format!("Claimed by {}!", user_name))
+                    .style(ButtonStyle::Secondary)
+                    .disabled(true)]
+                .into(),
+            ),
+        )]),
+    ))
 }

@@ -73,3 +73,15 @@ pub fn from_collection_payload(payload: &str) -> Option<(u64, usize)> {
     let (owner_id, index) = payload.split_once(',')?;
     Some((owner_id.parse().ok()?, index.parse().ok()?))
 }
+
+pub fn truncate_chars(value: &str, limit: usize) -> String {
+    if value.chars().count() <= limit {
+        return value.to_string();
+    }
+
+    if limit <= 3 {
+        return value.chars().take(limit).collect();
+    }
+
+    format!("{}...", value.chars().take(limit - 3).collect::<String>())
+}

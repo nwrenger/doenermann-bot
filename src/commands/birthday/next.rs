@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::{Datelike, Local};
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::CreateInteractionResponseMessage;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::builder::CreateEmbed;
 
 use crate::db::Database;
@@ -12,7 +12,7 @@ use crate::util::EMPTY_FIELD_VALUE;
 const MAX_BIRTHDAY_FIELDS: usize = 10;
 const FUTURE_FORMAT: &str = "%d %B %Y";
 
-pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponseMessage> {
+pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponse<'static>> {
     let mut birthdays = db.read().birthdays.values().cloned().collect::<Vec<_>>();
     let now = Local::now().date_naive();
 
@@ -57,5 +57,7 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionRespons
         embed = embed.field(EMPTY_FIELD_VALUE, String::from("None recorded yet!"), false);
     }
 
-    Ok(CreateInteractionResponseMessage::new().embed(embed))
+    Ok(CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new().embed(embed),
+    ))
 }

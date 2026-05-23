@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use light_magic::atomic::AtomicDatabase;
-use serenity::all::{CreateEmbed, CreateInteractionResponseMessage};
+use serenity::all::{CreateEmbed, CreateInteractionResponse, CreateInteractionResponseMessage};
 
 use crate::db::Database;
 use crate::error::Result;
 
 const MAX_LEADERBOARD_FIELDS: usize = 25;
 
-pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponseMessage> {
+pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionResponse<'static>> {
     let (mut players, total_goon_credits, roll_count) = {
         let db = db.read();
         let players = db
@@ -65,7 +65,9 @@ pub fn run(db: Arc<AtomicDatabase<Database>>) -> Result<CreateInteractionRespons
         }
     }
 
-    Ok(CreateInteractionResponseMessage::new().embed(embed))
+    Ok(CreateInteractionResponse::Message(
+        CreateInteractionResponseMessage::new().embed(embed),
+    ))
 }
 
 fn waifu_label(count: usize) -> &'static str {
